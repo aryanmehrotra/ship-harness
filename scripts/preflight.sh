@@ -66,7 +66,7 @@ repo_commits=$(git rev-list --count HEAD 2>/dev/null || echo 0)
 # --- needs, in order ---------------------------------------------------------
 needs=()
 [ "$has_cfg" = "0" ]          && needs+=('"init"')
-[ "$setup_confirmed" = "0" ]  && needs+=('"confirm-budgets"')
+[ "$setup_confirmed" = "0" ]  && needs+=('"confirm-run-mode"')
 [ "$mem_empty" = "1" ] && [ "$repo_commits" -gt 20 ] && needs+=('"backfill"')
 { [ "$mem_age" -gt 30 ] || [ "$gaps" -gt 0 ]; } && [ "$mem_empty" = "0" ] && needs+=('"refresh"')
 

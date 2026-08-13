@@ -39,7 +39,7 @@ bash "$PLUGIN/scripts/preflight.sh"
 | need | You do |
 |---|---|
 | `init` | set the repo up — preset, scaffold, ignore rules |
-| `confirm-budgets` | **stop and ask.** The one thing you may not decide for the user |
+| `confirm-run-mode` | **stop and ask.** Autonomy and budgets — the two you may not decide for the user |
 | `backfill` | build `docs/memory/` from history before planning anything |
 | `refresh` | re-verify stale lines and work off the open gaps |
 

@@ -30,7 +30,7 @@ bash "$PLUGIN/scripts/preflight.sh"
 | need | You do |
 |---|---|
 | `init` | set the repo up — preset, scaffold, ignore rules |
-| `confirm-budgets` | **stop and ask.** The one thing you may not decide for the user |
+| `confirm-run-mode` | **stop and ask.** Autonomy and budgets — the two you may not decide for the user |
 | `backfill` | build `docs/memory/` from history before planning anything |
 | `refresh` | re-verify stale lines and work off the open gaps |
 
@@ -127,6 +127,18 @@ Draft the plan silently first, then classify every decision in it:
 Ask only about `[D]` and `[N]`, and only where a wrong answer costs more than an hour of
 rework. **Maximum five questions, in one message**, numbered, multiple-choice where possible,
 each carrying your recommendation and what changes if the user picks otherwise.
+
+**Under `autonomy.mode: goal`, do not ask — answer.** Take your own recommendation, and
+record each one in the plan as an assumption rather than a decision:
+
+```
+- `[A]` <what you assumed> — because <reason> — wrong if <what would change it> — reversible: <how>
+```
+
+`[A]` lines are the first thing the report shows, so a human corrects them after the fact
+instead of before. That trade is only honest while the escalation list below is respected:
+an assumption you cannot reverse is not an assumption, it is a decision, and it stops the
+run. If a question meets the escalation bar, ask it — one question, not five.
 
 Never ask what S0 already answered. Never ask about naming, formatting, or anything
 reversible in five minutes — those are your call, and asking about them spends the user's
@@ -348,13 +360,52 @@ This gate raises the floor; it does not replace the human one. Say what the revi
 in two lines when you hand over, so the user is reading a plan that has already survived
 scrutiny rather than checking whether it did.
 
-Then **stop and say so plainly.** The user edits the plan and commits it. That commit is the
-approval gate. On the next invocation, do not proceed if `docs/plans/<TICKET>.md` is missing
-or has uncommitted changes:
+### The gate — `autonomy.mode` decides whether this is where you stop
+
+```bash
+jq -r '.autonomy.mode // "goal"' ship.config.json
+```
+
+**`goal` (default) — the ticket is the goal; drive to it.** Do not stop. Commit the plan
+yourself and keep going:
+
+```bash
+git add "docs/plans/<TICKET>.md" && git commit -m "plan: <TICKET> (self-approved, autonomy=goal)"
+```
+
+The plan is still a committed file, still diffed by S4, still the contract — only the
+signature changed, and the commit message says whose it is. **Never write a commit that
+implies a human approved it.** An audit trail that lies about who signed is worse than no
+audit trail, because it is trusted.
+
+Then say, in one line, what you are about to build and what you assumed — and continue
+straight into S3. The human's review moment moves from the plan to the PR, which is where
+they were going to look anyway.
+
+**`gated` — stop here.** The user edits the plan and commits it; that commit is the approval.
+On the next invocation, do not proceed if the plan is missing or uncommitted:
 
 ```bash
 git diff --quiet -- "docs/plans/<TICKET>.md" && git ls-files --error-unmatch "docs/plans/<TICKET>.md"
 ```
+
+### What still stops a `goal` run — and nothing else does
+
+Autonomy is not "never ask". It is "ask only where being wrong costs more than waiting".
+Stop, post the decision to the tracker with the exact question and your recommendation, and
+say plainly that the run is parked:
+
+| Stop on | Why this one |
+|---|---|
+| An **irreversible** step the plan did not already name — dropping a column, deleting data, rewriting history, anything touching production credentials | Rollback is the whole reason the plan has a Rollback section. If it cannot roll back, a wrong guess is permanent |
+| A `[D]` divergence whose blast radius reaches code the ticket never mentioned | The ticket bounds what you were asked to change; exceeding it is a scope decision, and scope is the user's |
+| Review caps exhausted with **blocking** findings still open | This is the disagreement the caps exist to surface. Approving to finish is the exact failure the harness is built against |
+| `BROKEN` evidence you could not fix within `caps.evidenceFix` | A report built on evidence that was never gathered is worse than no report |
+| A ticket too thin to plan from | You would be inventing the scope, not implementing it |
+
+Everything else you decide, and you write down what you decided. A run that stops on
+naming, formatting, library choice or anything reversible in five minutes has converted
+autonomy back into an interview with extra steps.
 
 ## S3 — Build
 
@@ -456,6 +507,10 @@ echo report > .evidence/phase
 Publish one page, in this order:
 
 1. **Verdict line first.** Shipped / blocked / needs a decision.
+1b. **Every `[A]` assumption**, if the run was autonomous — what you decided without asking,
+   and how to reverse each. This goes above the red flags: the human skipped the plan gate,
+   so this list is the whole of what they did not get to steer, and burying it converts
+   autonomy into something done behind their back.
 2. **At most five red flags**, ranked. Not everything you noticed — the five that would
    change someone's mind.
 3. **"If you only have two minutes, check these three things"**, with anchor links.

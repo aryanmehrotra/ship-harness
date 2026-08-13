@@ -119,15 +119,18 @@ cannot prefer the one you wrote. Differences that are merely different are repor
 ## The daily loop
 
 ```
-/ship-harness:ship T-123     → precedent → ≤5 questions → plan → two models review the PLAN → STOPS
-<you edit it>                → fix what it got wrong. This is where you do your thinking.
-git commit                   → this is the approval gate
-/ship-harness:ship T-123     → build → review A → review B → evidence → report → issue comment
-<you>                        → open one link
+/ship-harness:ship T-123     → precedent → plan → two models review the PLAN → self-approve
+                             → build → review A → review B → evidence → report → issue comment
+<you>                        → open one link, read the assumptions, correct what it got wrong
+
+  autonomy: gated            → the run stops after the plan and waits for your commit instead
 ```
 
-You are asked for judgement exactly twice: five questions, and one plan review. Everything
-else is either deterministic or delegated.
+**`goal` mode is the default: one invocation, ticket to PR.** Unasked questions become `[A]`
+assumptions at the top of the report, each with how to reverse it. The run still stops for the
+things where guessing is worse than waiting — anything irreversible, anything reaching outside
+the ticket, and any review disagreement it could not resolve. Set `autonomy.mode: gated` to get
+the plan-commit gate back.
 
 ## Evidence works for any stack
 

@@ -23,7 +23,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/preflight.sh"
 | need | Means | Do |
 |---|---|---|
 | `init` | no `ship.config.json` | **Set up**, below |
-| `confirm-budgets` | `setup.confirmedAt` is null | **Confirm the budgets**, below |
+| `confirm-run-mode` | `setup.confirmedAt` is null | **Confirm how it runs**, below |
 | `backfill` | memory is empty and the repo has real history | **Build**, below |
 | `refresh` | memory is 30+ days unverified, or gaps are open | **Refresh**, below |
 
@@ -113,13 +113,32 @@ and silently collapses the two review tiers into one model reviewing itself.
 
 ---
 
-## Confirm the budgets — do not skip, do not assume
+## Confirm how it runs — do not skip, do not assume
 
-**`ship` and `review` refuse to run until this is answered.** These numbers decide how many
-rounds, and how much money, every future run spends. A budget nobody chose is a default nobody
-owns.
+**Two questions, one message, then wait.** `ship` and `review` refuse to run until both are
+answered, because both spend the user's money and one of them decides whether a human sees
+the work before it is built.
 
-Show the table, say what each buys, ask for a yes or a change — **one message, then wait.**
+### 1 · Autonomy
+
+| Mode | A `ship` run | You review |
+|---|---|---|
+| **`goal`** (default) | drives the ticket to a PR without stopping; commits the plan itself, marked self-approved | the PR |
+| `gated` | writes the plan and stops; your commit is the approval | the plan, then the PR |
+
+Say the trade honestly rather than selling one:
+
+> `goal` is faster and it is the only mode that works when you are not sitting there. What
+> you give up is steering *before* the code exists, which is the cheapest moment to steer.
+> The harness pays some of that back: every unasked question becomes an `[A]` assumption at
+> the top of the report with how to reverse it, and the run still stops for anything
+> irreversible, anything reaching outside the ticket, and any review disagreement it could
+> not resolve.
+
+### 2 · Budgets
+
+These numbers decide how many rounds, and how much money, every future run spends. A budget
+nobody chose is a default nobody owns.
 
 | Cap | Default | What it bounds |
 |---|---|---|
@@ -140,7 +159,8 @@ tradeoff out loud, because it is real:
 > looks like one.
 
 ```bash
-jq --arg d "$(date -u +%Y-%m-%d)" '.setup = {confirmedAt: $d}' ship.config.json > .tmp \
+jq --arg d "$(date -u +%Y-%m-%d)" --arg m "<goal|gated>" \
+  '.setup = {confirmedAt: $d} | .autonomy = {mode: $m}' ship.config.json > .tmp \
   && mv .tmp ship.config.json
 ```
 

@@ -4,6 +4,30 @@ Notable changes, newest first. Versions follow [semver](https://semver.org). The
 `.claude-plugin/plugin.json` is what Claude Code installs against — CI fails the build if
 this file, that file and the git tag disagree.
 
+## 0.7.0
+
+**`ship` drives the ticket to a PR without stopping.** The two-invocation plan gate was the
+right default for someone sitting there watching, and the wrong one the moment they are not —
+a run that halts mid-way and waits has moved the work back onto the person who delegated it.
+
+- `autonomy.mode` — **`goal` (new default)** or `gated` (the old behaviour). Under `goal` the
+  run commits the plan itself, `plan: <TICKET> (self-approved, autonomy=goal)`, and continues
+  straight into build. The plan is still a committed file, still what S4 diffs against, still
+  the contract — only the signature changed, and the commit message says whose it is. **Never
+  write a commit that implies a human approved it:** an audit trail that lies about who signed
+  is worse than none, because it is trusted.
+- **Unasked questions become `[A]` assumptions**, each with why, what would make it wrong, and
+  how to reverse it — and they lead the report, above the red flags. The human skipped the plan
+  gate, so that list is the whole of what they did not get to steer.
+- **Autonomy is not "never ask".** A `goal` run still stops, posts the question and parks, for:
+  an irreversible step the plan did not name; a `[D]` divergence reaching outside the ticket;
+  review caps exhausted with blocking findings open; `BROKEN` evidence it could not fix; a
+  ticket too thin to plan from. Everything else it decides and writes down — a run that stops
+  on naming or formatting has converted autonomy back into an interview with extra steps.
+- Setup now asks two questions rather than one, and `needs[]` reports `confirm-run-mode`.
+- New wiring test: the schema, the skills and every preset must agree on the mode names, or a
+  `goal` run silently becomes a `gated` one nobody is there to unblock.
+
 ## 0.6.0
 
 **The harness notices when it is out of date, and CI refuses a change that forgets to say so.**

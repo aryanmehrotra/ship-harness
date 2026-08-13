@@ -35,6 +35,14 @@
         "confirmedBy": { "type": "string" }
       }
     },
+    "autonomy": {
+      "type": "object",
+      "description": "Whether a ship run stops at the plan for a human signature, or drives the ticket to a PR on its own. `goal` still commits the plan as the contract — it self-approves and says so in the commit message — and still stops for the irreversible, out-of-scope and unresolved-disagreement cases.",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["goal", "gated"], "default": "goal" }
+      }
+    },
     "caps": {
       "type": "object",
       "description": "Loop budgets. You set these at init and confirm them before first use. 0 means no fixed cap: the loop runs until a round produces no new findings. A count is a blunt instrument — it stops a loop that is still making progress and lets one that is going in circles run to the limit — so the convergence rule is the real termination criterion either way.",

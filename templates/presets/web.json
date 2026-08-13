@@ -15,6 +15,9 @@
   "setup": {
     "confirmedAt": null
   },
+  "autonomy": {
+    "mode": "goal"
+  },
   "caps": {
     "research": 3,
     "reviewDelta": 2,

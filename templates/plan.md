@@ -38,6 +38,7 @@ Tagged, one line each. A citation is a path you can open, not a memory.
 - `[P]` <decision> — settled by `docs/adr/NNNN`, <date>
 - `[D]` <decision> — diverges from `<path>`; why: <…>; blast radius: <…>
 - `[N]` <decision> — none found → ADR NNNN drafted
+- `[A]` <assumption> — autonomy=goal, unasked — wrong if <…> — reversible: <how>
 
 ## Unknowns → spikes
 

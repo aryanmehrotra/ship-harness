@@ -529,6 +529,17 @@ if run_test "plan-review-wired" ; then
     n=$(basename "$a" .md)
     grep -qr "$n" "$ROOT"/skills/*/SKILL.md || missing="$missing $n"
   done
+  # Autonomy decides whether a run stops for a human. If the skills and the schema ever
+  # disagree about the mode name, a `goal` run silently becomes a `gated` one that nobody
+  # is sitting there to unblock.
+  for a in autonomy goal gated; do
+    grep -q "$a" "$ROOT/schema/ship.config.schema.json" || missing="$missing schema:$a"
+    grep -qr "$a" "$ROOT"/skills/*/SKILL.md || missing="$missing skill:$a"
+  done
+  for p in "$ROOT"/templates/presets/*.json; do
+    jq -e '.autonomy.mode == "goal" or .autonomy.mode == "gated"' "$p" >/dev/null 2>&1 \
+      || missing="$missing preset:$(basename "$p")"
+  done
   for c in planReviewA planReviewB spikes research reviewDelta; do
     grep -q "$c" "$ROOT/schema/ship.config.schema.json" || missing="$missing schema:$c"
     grep -qr "$c" "$ROOT"/skills/*/SKILL.md || missing="$missing skill:$c"
