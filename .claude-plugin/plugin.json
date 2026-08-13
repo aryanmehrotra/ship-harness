@@ -1,7 +1,7 @@
 {
   "name": "ship-harness",
   "description": "Ticket to reviewable PR with receipts: mines your repo's precedent, plans against it, builds, reviews with two models, gathers deterministic evidence, and publishes one page you actually read.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "Aryan Mehrotra"
   },
