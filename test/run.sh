@@ -347,6 +347,48 @@ if run_test "precedent-no-paths"; then
   want "precedent-no-paths: survives being called with no paths" 0 "$?"
 fi
 
+if run_test "precedent-noise"; then
+  # Found by dogfooding on a 5,000-commit repo: the top co-change pair was
+  # "go.mod,go.sum" and lockfiles owned the churn ranking, pushing every real
+  # signal past the end of `head`.
+  d="$(new_repo)"
+  for i in 1 2 3 4 5; do
+    echo "dep$i" >> "$d/go.sum"; echo "dep$i" >> "$d/package-lock.json"
+    echo "x$i" >> "$d/main.go"
+    git -C "$d" add -A >/dev/null 2>&1
+    git -C "$d" commit -qm "chore: bump $i" >/dev/null 2>&1
+  done
+  out=$( cd "$d" && bash "$ROOT/scripts/precedent-scan.sh" --backfill 2>/dev/null )
+  churn=$(printf '%s' "$out" | sed -n '/=== CHURN/,/=== SCARS/p')
+  if printf '%s' "$churn" | grep -qE 'go\.sum|package-lock'; then
+    bad "precedent-noise" "lockfiles still ranked in CHURN"
+  elif printf '%s' "$churn" | grep -q 'main.go'; then
+    ok "precedent-noise: lockfiles filtered, real files still ranked"
+  else
+    bad "precedent-noise" "real files missing from CHURN"
+  fi
+fi
+
+if run_test "precedent-scars-mainline"; then
+  # Same dogfooding run: "to be reverted" and "revert unwanted changes" from
+  # inside a PR branch drowned out the actual landed reverts.
+  d="$(new_repo)"
+  git -C "$d" checkout -qb feature >/dev/null 2>&1
+  echo a > "$d/f.txt"; git -C "$d" add -A >/dev/null 2>&1
+  git -C "$d" commit -qm "to be reverted, wip" >/dev/null 2>&1
+  git -C "$d" checkout -q master >/dev/null 2>&1 || git -C "$d" checkout -q main >/dev/null 2>&1
+  git -C "$d" merge -q --no-ff feature -m "Merge feature" >/dev/null 2>&1
+  echo b > "$d/g.txt"; git -C "$d" add -A >/dev/null 2>&1
+  git -C "$d" commit -qm 'Revert "the thing that broke prod" (#42)' >/dev/null 2>&1
+  out=$( cd "$d" && bash "$ROOT/scripts/precedent-scan.sh" --backfill 2>/dev/null )
+  scars=$(printf '%s' "$out" | sed -n '/SCARS — reverts/,/AUTHORSHIP/p')
+  has_real=$(printf '%s' "$scars" | grep -c 'the thing that broke prod')
+  has_wip=$(printf '%s' "$scars" | grep -c 'to be reverted, wip')
+  [ "$has_real" -ge 1 ] && [ "$has_wip" -eq 0 ] \
+    && ok "precedent-scars-mainline: landed reverts kept, PR-branch WIP excluded" \
+    || bad "precedent-scars-mainline" "landed=$has_real (want >=1) wip=$has_wip (want 0)"
+fi
+
 if run_test "tracker-none"; then
   d="$(new_repo)"
   jq -n '{tracker:{kind:"none"},collectors:[{name:"t",kind:"builtin:tests"}]}' > "$d/ship.config.json"

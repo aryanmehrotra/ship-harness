@@ -38,25 +38,50 @@ srcdirs() {
   printf '%s\n' "${found[@]+"${found[@]}"}"
 }
 
+# Files that change on nearly every commit and mean nothing: lockfiles, generated
+# code, vendored trees. Left in, they take the top of every ranking and push the
+# actual signal off the end of `head`. On a real repo the top co-change pair was
+# `go.mod,go.sum` — true, and worth precisely nothing.
+NOISE='(^|/)(go\.sum|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.lock|poetry\.lock|Gemfile\.lock|composer\.lock|\.terraform\.lock\.hcl)$'
+NOISE="$NOISE"'|\.(pb|gen|generated)\.go$|_generated\.[a-z]+$|\.snap$|\.min\.(js|css)$'
+NOISE="$NOISE"'|(^|/)(vendor|node_modules|dist|build|target|\.next)/'
+
 if [ "${1:-}" = "--backfill" ]; then
   hdr "CHURN (where the action is)"
-  git log --format= --name-only | grep -v '^$' | sort | uniq -c | sort -rn | head -50
+  git log --format= --name-only | grep -v '^$' | grep -Ev "$NOISE" |
+    sort | uniq -c | sort -rn | head -50
 
-  hdr "SCARS (reverts, hotfixes, rollbacks — highest signal per token in the repo)"
-  git log --grep='revert\|rollback\|hotfix\|urgent\|prod issue\|incident\|postmortem' \
-          -i --oneline --no-merges | head -60
+  # --first-parent is what makes this section worth reading. Without it you get
+  # every "to be reverted" and "revert unwanted changes" from inside somebody's
+  # PR branch — work-in-progress noise that never reached anyone. With it you get
+  # only what actually landed on the mainline, which is the definition of a scar.
+  hdr "SCARS — reverts that landed on the mainline (highest signal per token)"
+  git log --first-parent --grep='^Revert' --oneline | head -20
+
+  hdr "SCARS — hotfixes, rollbacks and incidents on the mainline"
+  git log --first-parent --no-merges -i \
+          --grep='rollback\|hotfix\|urgent fix\|prod issue\|incident\|postmortem\|regression' \
+          --oneline | head -40
 
   hdr "AUTHORSHIP (who to believe on which subsystem)"
   git shortlog -sn --no-merges | head -20
 
   hdr "REWRITES (3+ modifications = an unresolved design problem)"
-  git log --format= --name-only | grep -v '^$' | sort | uniq -c | sort -rn |
-    awk '$1>=3 {print}' | head -30
+  git log --format= --name-only | grep -v '^$' | grep -Ev "$NOISE" |
+    sort | uniq -c | sort -rn | awk '$1>=3 {print}' | head -30
 
   hdr "CO-CHANGE COUPLING (files that always change together = an implicit contract)"
-  git log --format='%H' --no-merges | head -400 | while read -r c; do
-    git show --format= --name-only "$c" | grep -v '^$' | sort | paste -sd, -
-  done | sort | uniq -c | sort -rn | awk '$1>=3' | head -25
+  # One `git log` pass rather than 400 `git show` forks. git already emits
+  # --name-only paths in sorted order, so no per-commit sort is needed either.
+  # Commits touching more than 8 files are dropped: a 40-file tuple never repeats,
+  # so it can only add noise.
+  git log --no-merges --format='%x01%H' --name-only -n 600 2>/dev/null |
+    grep -Ev "$NOISE" |
+    awk '
+      /^\001/ { if (n >= 2 && n <= 8) print k; k = ""; n = 0; next }
+      NF      { k = (k == "" ? $0 : k "," $0); n++ }
+      END     { if (n >= 2 && n <= 8) print k }
+    ' | sort | uniq -c | sort -rn | awk '$1>=3' | head -25
 
   hdr "AGE (how much of this history is still true)"
   echo "first commit: $(git log --reverse --format=%as | head -1)"
