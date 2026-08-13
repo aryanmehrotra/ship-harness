@@ -29,7 +29,7 @@ want() { # name, expected-rc, actual-rc, [detail]
 
 run_test() { case "$1" in *"$FILTER"*) return 0;; *) return 1;; esac; }
 
-# A throwaway git repo, initialised the way /ship-harness:init would leave it.
+# A throwaway git repo, initialised the way /ship-harness:memory would leave it.
 new_repo() {
   local d; d="$(mktemp -d "$TMPROOT/repo.XXXXXX")"
   git -C "$d" init -q
@@ -138,6 +138,38 @@ if run_test "node-syntax"; then
   else
     skip "node-syntax" "node not installed"
   fi
+fi
+
+if run_test "surface"; then
+  # The whole point of the merge is that a user learns three verbs, not five. A stray
+  # skill directory quietly re-expands the surface and nothing else would notice.
+  found=$(find "$ROOT/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+  names=$(find "$ROOT/skills" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort | tr '\n' ' ')
+  [ "$found" = "3" ] && [ "$names" = "memory review ship " ] \
+    && ok "surface: exactly three skills — ship, review, memory" \
+    || bad "surface" "found $found: $names"
+fi
+
+if run_test "preflight-fresh"; then
+  # A repo with no config must be reported as needing setup, not silently planned in.
+  d="$(new_repo)"
+  out=$(cd "$d" && bash "$ROOT/scripts/preflight.sh" 2>/dev/null)
+  echo "$out" | jq -e '.config == false and (.needs | index("init"))' >/dev/null 2>&1 \
+    && ok "preflight-fresh: an unconfigured repo reports needs=[init,...]" \
+    || bad "preflight-fresh" "$(echo "$out" | tr -d '\n')"
+fi
+
+if run_test "preflight-ready"; then
+  # Configured, confirmed, memory present → nothing owed, so a run must not invent chores.
+  d="$(new_repo)"
+  jq -n '{setup:{confirmedAt:"2026-01-01"},collectors:[{name:"t",kind:"builtin:tests"}]}' > "$d/ship.config.json"
+  mkdir -p "$d/docs/memory"
+  for i in $(seq 1 20); do echo "- line $i — seen: 2 files · e.g. a.go:1" >> "$d/docs/memory/map.md"; done
+  git -C "$d" add -A >/dev/null 2>&1 && git -C "$d" commit -qm mem >/dev/null 2>&1
+  out=$(cd "$d" && bash "$ROOT/scripts/preflight.sh" 2>/dev/null)
+  echo "$out" | jq -e '.needs | length == 0' >/dev/null 2>&1 \
+    && ok "preflight-ready: a healthy repo is owed nothing" \
+    || bad "preflight-ready" "$(echo "$out" | tr -d '\n')"
 fi
 
 if run_test "executable"; then

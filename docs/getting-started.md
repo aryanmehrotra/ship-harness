@@ -29,16 +29,22 @@ running.
 /plugin install ship-harness
 ```
 
-## 2. Initialise the repo
+## 2. Start a run — setup happens inside it
 
 ```bash
 cd ~/code/your-repo
-/ship-harness:init
+/ship-harness:ship T-123
 ```
 
-It detects your stack, picks a preset, writes `ship.config.json`, scaffolds
-`docs/{plans,memory,adr}`, appends ignore rules, and — importantly — tells you which fields
-it had to guess.
+Every run opens with a deterministic preflight (`scripts/preflight.sh`) that reports what this
+repo is missing, and the run fixes it before planning anything. On a fresh repo that means it
+detects your stack, picks a preset, writes `ship.config.json`, scaffolds
+`docs/{plans,memory,adr}`, appends ignore rules, builds `docs/memory/` from history, and —
+importantly — tells you which fields it had to guess.
+
+It stops and asks you exactly one setup question: the loop budgets. Those decide how many
+rounds and how much money every later run spends, so they are not a default anyone should
+inherit silently.
 
 Read what it changed. The test command and `testPaths` are guesses until you confirm them,
 and a `testPaths` glob that matches nothing silently protects nothing.
@@ -57,17 +63,18 @@ git add .evidence/baseline && git commit -m "chore: record ship-harness baseline
 If that exits `2`, a collector could not run. Fix it before recording — a baseline captured
 from a broken app makes the breakage the expected state, and every future run will agree.
 
-## 4. Build the precedent index
+## 4. The precedent index builds — and maintains — itself
 
-```bash
-/ship-harness:backfill
-```
+That first run reads git history in slices and writes `docs/memory/`: a citation index of
+patterns, decisions, scars, and where things live. Every line is a grep you can re-run.
+Commit it.
 
-Reads git history in slices and writes `docs/memory/` — a citation index of patterns,
-decisions, scars, and where things live. Every line is a grep you can re-run. Commit it.
+Expect it to be imperfect on the first pass. It is derived and disposable, it is re-verified
+automatically once it goes stale, and every run records what it had to look up — which is what
+makes it get better at your repo rather than merely older in it.
 
-Expect this to be imperfect on the first pass. It is derived and disposable; the monthly
-`/ship-harness:refresh` is what makes it trustworthy over time.
+To drive any of that by hand: `/ship-harness:memory`, optionally with `build`, `refresh`, or
+`learn <topic>`.
 
 ## 5. Ship something
 

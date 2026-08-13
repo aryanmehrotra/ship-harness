@@ -38,7 +38,7 @@ done
 
 CFG="$ROOT/ship.config.json"
 if [ ! -f "$CFG" ]; then
-  echo "collect.sh: no ship.config.json at repo root — run /ship-harness:init first" >&2
+  echo "collect.sh: no ship.config.json at repo root — run /ship-harness:memory, or just start a ship/review run" >&2
   exit 2
 fi
 command -v jq >/dev/null 2>&1 || { echo "collect.sh: jq is required" >&2; exit 2; }

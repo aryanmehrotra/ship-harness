@@ -235,7 +235,7 @@ reads, and current state stops being findable — which defeats keeping state th
 all of it quoted with equal confidence.
 
 **How it works:** every line cites a path and is re-checkable by grep. Files have hard line
-caps. `/ship-harness:refresh` re-runs each grep, marks misses `STALE`, deletes on the second
+caps. The refresh pass re-runs each grep, marks misses `STALE`, deletes on the second
 strike, and promotes confidence only on evidence.
 
 **Why caps:** adding is easy and removing takes judgement, so removal never happens without

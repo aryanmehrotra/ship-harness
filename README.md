@@ -90,14 +90,14 @@ changelog disagree.
 bash install.sh /path/to/your/repo   # then merge the printed hook into .claude/settings.json
 ```
 
-Then, once per repo:
+Then just start. **There is no setup command to remember:**
 
 ```bash
-/ship-harness:init          # detects your stack, writes ship.config.json, scaffolds docs/
-/ship-harness:backfill      # builds docs/memory/ from git history — run once
+/ship-harness:ship T-123    # first run detects the stack, scaffolds docs/, builds memory,
+                            # and asks the one question it may not answer for you
 ```
 
-## Two entry points
+## Three commands, and you type two of them
 
 | | `/ship-harness:ship T-123` | `/ship-harness:review 412` |
 |---|---|---|
@@ -105,6 +105,10 @@ Then, once per repo:
 | Plan | written, reviewed by two models, **committed by you** | written independently from the ticket, never committed |
 | Then | build tests-first, review the diff against the plan | read the diff, rewrite it as a plan, compare the two **blind** |
 | Catches | drift, reinvention, self-approval | over-engineering, and the failure mode nobody handled |
+
+The third is `/ship-harness:memory` — set up, build, refresh, or `learn <topic>` — and you
+should rarely need it: every run checks the repo's state first and does that work itself. A
+harness that makes you remember its chores has moved its maintenance onto you.
 
 `review` reads the ticket and plans the simplest thing that satisfies it **before** opening
 the diff — because once you have seen the implementation, every "independent" plan you write

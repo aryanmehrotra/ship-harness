@@ -27,17 +27,28 @@ seeing the answer.
 It also catches the class of defect a diff-only review structurally cannot: **what is
 missing**. Nothing in a diff tells you about the failure mode nobody handled.
 
-## Before anything
+## Preflight — heal the repo, do not lecture the user
 
 ```bash
-jq -e '.setup.confirmedAt // empty' ship.config.json >/dev/null \
-  || echo "LOOP BUDGETS NOT CONFIRMED — run /ship-harness:init step 3.5"
+bash "$PLUGIN/scripts/preflight.sh"
 ```
 
-**If `setup.confirmedAt` is missing or null, stop.** Show the caps table from
-`/ship-harness:init` step 3.5, ask the user to confirm or change it, write the answer, and
-only then continue. These budgets decide how many rounds every run spends; running on
-defaults nobody agreed to is how a harness quietly costs more than it saves.
+`needs[]` comes back ordered. **Do the work yourself**, following
+`$PLUGIN/skills/memory/SKILL.md`, and say in one line what you did:
+
+| need | You do |
+|---|---|
+| `init` | set the repo up — preset, scaffold, ignore rules |
+| `confirm-budgets` | **stop and ask.** The one thing you may not decide for the user |
+| `backfill` | build `docs/memory/` from history before planning anything |
+| `refresh` | re-verify stale lines and work off the open gaps |
+
+Empty `needs[]` → say nothing and continue.
+
+Only `confirm-budgets` blocks: those numbers decide how many rounds and how much money every
+future run spends, and a default nobody chose is the kind of thing noticed after the bill.
+Everything else is the harness's own maintenance, and asking a user to type `backfill` is
+asking them to remember a chore that has exactly one correct answer.
 
 ## R0 — Read the ticket. Do not open the diff yet.
 
@@ -93,6 +104,27 @@ explicitly, not a review finding citing an author the repo never agreed to follo
 
 Cap the lookups at `caps.research` (default 3). Research is the easiest possible way to spend
 an hour producing nothing a reviewer can act on.
+
+### Record what you had to learn — immediately, not at the end
+
+The moment you look something up to get unstuck — a dependency's real behaviour, a protocol
+rule, a subsystem nobody documented — write it into `docs/memory/` **before you use it**, and
+append the question to `.evidence/memory-gaps.md`:
+
+```
+- <what was needed> — needed by: <TICKET>, <date> — resolved: <memory line | still open>
+```
+
+Deferring this to the end is how it never happens: by then the answer feels obvious and no
+longer worth writing down, which is exactly the illusion that makes the next run pay for it
+again. The gap list is also what makes the next `refresh` targeted rather than generic — it
+is the harness's own to-do list, and it is the difference between getting better at a repo
+and merely getting older in it.
+
+**Memory is loaded whole, never retrieved from.** The caps exist so the entire set fits in
+context — a few hundred lines. Do not build a retrieval step over something that small; read
+all of `docs/memory/` at the start of the run and keep it there.
+
 
 ### R1.6 — Verify every external claim at its source — binding
 

@@ -18,26 +18,28 @@ Throughout, `<TICKET>` means the identifier you were given. `$PLUGIN` means
 without opening the file it points at. Memory is an index of where to look; it is never the
 answer.
 
-## Before anything
+## Preflight — heal the repo, do not lecture the user
 
 ```bash
-test -f ship.config.json || echo "NOT INITIALISED — run /ship-harness:init first"
-bash "$PLUGIN/scripts/tracker.sh" kind
+bash "$PLUGIN/scripts/preflight.sh"
 ```
 
-If `ship.config.json` is missing, stop and tell the user to run `/ship-harness:init`. Do not
-improvise the layout; every later step reads that config.
+`needs[]` comes back ordered. **Do the work yourself**, following
+`$PLUGIN/skills/memory/SKILL.md`, and say in one line what you did:
 
-```bash
-jq -e '.setup.confirmedAt // empty' ship.config.json >/dev/null \
-  || echo "LOOP BUDGETS NOT CONFIRMED — run /ship-harness:init step 3.5"
-```
+| need | You do |
+|---|---|
+| `init` | set the repo up — preset, scaffold, ignore rules |
+| `confirm-budgets` | **stop and ask.** The one thing you may not decide for the user |
+| `backfill` | build `docs/memory/` from history before planning anything |
+| `refresh` | re-verify stale lines and work off the open gaps |
 
-**If `setup.confirmedAt` is missing or null, stop.** Show the caps table from
-`/ship-harness:init` step 3.5, ask the user to confirm or change it, write the answer, and
-only then continue. These budgets decide how many rounds every run spends; running on
-defaults nobody agreed to is how a harness quietly costs more than it saves.
+Empty `needs[]` → say nothing and continue.
 
+Only `confirm-budgets` blocks: those numbers decide how many rounds and how much money every
+future run spends, and a default nobody chose is the kind of thing noticed after the bill.
+Everything else is the harness's own maintenance, and asking a user to type `backfill` is
+asking them to remember a chore that has exactly one correct answer.
 
 Write the phase at every transition. The `phase-guard` hook reads this file, so a stale value
 is the difference between tests being frozen and not:
@@ -138,6 +140,27 @@ makes it worse than silence.
 **Precedence is unchanged: code > `docs/memory` > repo docs > literature.** Never cite a book
 to overrule a pattern the repo already uses in two or more places — that is an ADR, argued
 explicitly, not a line in a plan. Capped at `caps.research` (default 3).
+
+### Record what you had to learn — immediately, not at the end
+
+The moment you look something up to get unstuck — a dependency's real behaviour, a protocol
+rule, a subsystem nobody documented — write it into `docs/memory/` **before you use it**, and
+append the question to `.evidence/memory-gaps.md`:
+
+```
+- <what was needed> — needed by: <TICKET>, <date> — resolved: <memory line | still open>
+```
+
+Deferring this to the end is how it never happens: by then the answer feels obvious and no
+longer worth writing down, which is exactly the illusion that makes the next run pay for it
+again. The gap list is also what makes the next `refresh` targeted rather than generic — it
+is the harness's own to-do list, and it is the difference between getting better at a repo
+and merely getting older in it.
+
+**Memory is loaded whole, never retrieved from.** The caps exist so the entire set fits in
+context — a few hundred lines. Do not build a retrieval step over something that small; read
+all of `docs/memory/` at the start of the run and keep it there.
+
 
 ### Verify every external claim at its source — binding
 

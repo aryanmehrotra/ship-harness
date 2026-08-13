@@ -93,7 +93,8 @@ that way; see
 "setup": { "confirmedAt": "2026-08-13" }
 ```
 
-Written by `/ship-harness:init` once you have seen the caps table and confirmed or changed it.
+Written once you have seen the caps table and confirmed or changed it — the first `ship` or
+`review` run asks if it is missing.
 **`ship` and `review` refuse to run while this is null or missing** — they stop and ask.
 
 That gate exists because these numbers decide how many rounds, and how much money, every
@@ -139,7 +140,7 @@ Per-collector `config` options are documented in
 
 ## Presets
 
-`/ship-harness:init` starts from one of these and then corrects it:
+Setup starts from one of these and then corrects it:
 
 | Preset | For | Collectors |
 |---|---|---|

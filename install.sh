@@ -68,7 +68,6 @@ overwritten" become suggestions in a prompt rather than rules — which is the
 difference this harness is built on.
 
 Then, in $TARGET:
-  1. /ship-harness:init         scaffold and configure
-  2. /ship-harness:backfill     build docs/memory from history (once)
-  3. /ship-harness:ship <TICKET>
+  1. /ship-harness:ship <TICKET>     sets the repo up on first run, then plans
+  2. /ship-harness:review <PR>       review someone else's work
 MSG

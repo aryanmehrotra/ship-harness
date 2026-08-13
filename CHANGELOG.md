@@ -4,6 +4,35 @@ Notable changes, newest first. Versions follow [semver](https://semver.org). The
 `.claude-plugin/plugin.json` is what Claude Code installs against — CI fails the build if
 this file, that file and the git tag disagree.
 
+## 0.5.0
+
+**Five commands become three, and you type two of them.** `init`, `backfill` and `refresh` are
+gone as commands — a harness that makes you remember its chores has moved its maintenance onto
+you.
+
+- `scripts/preflight.sh` — deterministic repo-state report: config, confirmed budgets, memory
+  size and age, open gaps, phase. It returns an ordered `needs[]`, and `ship` and `review`
+  **do that work themselves** before planning. Whether a repo needs a backfill is not a
+  judgement call, so it is no longer left to one.
+- `skills/memory/` absorbs all three: `setup`, `build`, `refresh`, `learn <topic>`, `gaps`.
+  With no argument it reads the preflight and does what is owed. You should rarely need it.
+- **Only one thing still stops a run to ask you**: the loop budgets. Everything else is fixed
+  silently and reported in one line.
+- **The harness records what it had to learn, before it uses it.** Any lookup that got a run
+  unstuck is written into `docs/memory/` immediately, and the question appended to
+  `.evidence/memory-gaps.md` with what needed it. Deferring that to the end is how it never
+  happens — by then the answer feels obvious and no longer worth writing down, which is
+  exactly the illusion that makes the next run pay for it again.
+- `.evidence/memory-gaps.md` is the harness's own to-do list, and it makes the next refresh
+  targeted rather than generic: the difference between getting better at a repo and merely
+  getting older in it.
+- **Memory is loaded whole, never retrieved from.** The caps exist so the entire set is a few
+  hundred lines; a retrieval layer over something that small costs more than it saves.
+- New tests: `surface` (exactly three skills), `preflight-fresh`, `preflight-ready`.
+
+**Breaking:** `/ship-harness:init`, `:backfill` and `:refresh` no longer exist. Their work now
+happens automatically, or on demand via `/ship-harness:memory`.
+
 ## 0.4.0
 
 **A second entry point: `/ship-harness:review` — review someone else's PR by planning the

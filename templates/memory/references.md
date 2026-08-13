@@ -2,7 +2,7 @@
 
 External knowledge this repo has actually used: the book, paper, RFC or spec section behind a
 decision, and where it was applied. Maintained by `/ship-harness:ship` (S7),
-`/ship-harness:review` (R8) and `/ship-harness:refresh`.
+`/ship-harness:review` (R8) and `/ship-harness:memory`.
 
 **Three rules, and they are what make this file worth reading:**
 

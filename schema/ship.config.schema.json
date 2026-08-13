@@ -28,7 +28,7 @@
     },
     "setup": {
       "type": "object",
-      "description": "Written by /ship-harness:init once the user has confirmed the loop budgets. The ship and review skills refuse to run until confirmedAt is set, because a budget nobody chose is a default nobody owns.",
+      "description": "Written once the user has confirmed the loop budgets. The ship and review skills refuse to run until confirmedAt is set, because a budget nobody chose is a default nobody owns.",
       "additionalProperties": false,
       "properties": {
         "confirmedAt": { "type": ["string", "null"], "description": "ISO date the caps were confirmed. null means never confirmed." },
