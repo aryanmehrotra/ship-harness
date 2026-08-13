@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ship-harness",
+  "description": "The ship-harness plugin: ticket to reviewable PR, with receipts.",
+  "owner": {
+    "name": "Aryan Mehrotra"
+  },
+  "plugins": [
+    {
+      "name": "ship-harness",
+      "description": "Ticket to reviewable PR with receipts: mines your repo's precedent, plans against it, builds, reviews with two models, gathers deterministic evidence, and publishes one page you actually read.",
+      "author": {
+        "name": "Aryan Mehrotra"
+      },
+      "category": "workflow",
+      "source": "./",
+      "homepage": "https://github.com/aryanmehrotra/ship-harness"
+    }
+  ]
+}

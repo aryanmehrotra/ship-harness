@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/aryanmehrotra/ship-harness/main/schema/ship.config.schema.json",
+  "tracker": { "kind": "github" },
+  "testPaths": ["**/*_test.go", "test/**", "tests/**"],
+  "attribution": false,
+  "caps": { "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
+  "reviewers": { "correctness": "sonnet", "design": "opus" },
+  "collectors": [
+    { "name": "tests", "kind": "builtin:tests", "config": { "cmd": "go test ./..." } },
+    {
+      "name": "api",
+      "kind": "builtin:http-pairs",
+      "config": {
+        "baseUrl": "http://localhost:8080",
+        "requests": [
+          { "name": "health", "method": "GET", "path": "/health" }
+        ],
+        "includeHeaders": ["content-type"],
+        "redact": [
+          "\"id\"[[:space:]]*:[[:space:]]*\"[^\"]*\"",
+          "\"(createdAt|updatedAt|timestamp)\"[[:space:]]*:[[:space:]]*\"[^\"]*\""
+        ],
+        "timeoutSec": 15
+      }
+    }
+  ]
+}

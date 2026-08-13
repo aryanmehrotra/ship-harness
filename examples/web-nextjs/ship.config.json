@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/aryanmehrotra/ship-harness/main/schema/ship.config.schema.json",
+  "tracker": { "kind": "github" },
+  "testPaths": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "e2e/**", "__tests__/**"],
+  "attribution": false,
+  "caps": { "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
+  "reviewers": { "correctness": "sonnet", "design": "opus" },
+  "collectors": [
+    { "name": "tests", "kind": "builtin:tests",
+      "config": { "cmd": "npm test -- --run", "timeoutSec": 900 } },
+    {
+      "name": "web",
+      "kind": "builtin:web-shots",
+      "config": {
+        "baseUrl": "http://localhost:3000",
+        "routes": ["/", "/login", "/settings", "/pricing"],
+        "widths": [390, 768, 1440],
+        "themes": ["light", "dark"],
+        "height": 900,
+        "fullPage": true,
+        "settleMs": 300,
+        "waitFor": null,
+        "threshold": 0.1,
+        "maxRatio": 0.001,
+        "mask": [".timestamp", "[data-testid=avatar]"],
+        "ignoreRequests": ["favicon.ico", "googletagmanager", "/_next/static/chunks/.*\\.hot-update"],
+        "ignoreConsole": ["Download the React DevTools"]
+      }
+    }
+  ]
+}

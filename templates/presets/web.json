@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/aryanmehrotra/ship-harness/main/schema/ship.config.schema.json",
+  "tracker": { "kind": "github" },
+  "testPaths": ["tests/**", "test/**", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "e2e/**"],
+  "attribution": false,
+  "caps": { "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
+  "reviewers": { "correctness": "sonnet", "design": "opus" },
+  "collectors": [
+    { "name": "tests", "kind": "builtin:tests", "config": { "cmd": "npm test" } },
+    {
+      "name": "web",
+      "kind": "builtin:web-shots",
+      "config": {
+        "baseUrl": "http://localhost:3000",
+        "routes": ["/"],
+        "widths": [390, 768, 1440],
+        "themes": ["light", "dark"],
+        "height": 900,
+        "fullPage": true,
+        "settleMs": 300,
+        "threshold": 0.1,
+        "maxRatio": 0.001,
+        "mask": [],
+        "ignoreRequests": ["favicon.ico"],
+        "ignoreConsole": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+*.log
+# This repo IS the harness; it has no .evidence of its own.
+.evidence/

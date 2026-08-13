@@ -1,0 +1,7 @@
+
+# --- ship-harness -----------------------------------------------------------
+# Everything the harness generates is disposable except the baselines, which are
+# the oracle every future run is compared against. Those are committed on purpose.
+.evidence/*
+!.evidence/baseline/
+!.evidence/baseline/**

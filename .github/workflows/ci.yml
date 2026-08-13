@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: shellcheck
+        run: shellcheck -S warning scripts/*.sh collectors/*.sh hooks/*.sh install.sh test/run.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax-check the node collector
+        run: node --check collectors/web-shots.mjs
+
+      - name: Validate every shipped JSON
+        run: |
+          for f in $(find . -name '*.json' -not -path './node_modules/*'); do
+            jq -e . "$f" > /dev/null || { echo "invalid JSON: $f"; exit 1; }
+          done
+
+      - name: Validate presets against the schema
+        run: |
+          npm i -g ajv-cli@5 >/dev/null 2>&1
+          for p in templates/presets/*.json; do
+            ajv validate -s schema/ship.config.schema.json -d "$p" --spec=draft7 --strict=false
+          done
+
+      - name: Test suite
+        run: bash test/run.sh

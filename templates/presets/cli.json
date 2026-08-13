@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/aryanmehrotra/ship-harness/main/schema/ship.config.schema.json",
+  "tracker": { "kind": "github" },
+  "testPaths": ["tests/**", "test/**", "**/*_test.go", "**/*_test.py"],
+  "attribution": false,
+  "caps": { "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
+  "reviewers": { "correctness": "sonnet", "design": "opus" },
+  "collectors": [
+    { "name": "tests", "kind": "builtin:tests", "config": { "cmd": "make test" } },
+    {
+      "name": "cli",
+      "kind": "builtin:cmd-golden",
+      "config": {
+        "cases": [
+          { "name": "help", "cmd": "./bin/app --help" }
+        ],
+        "redact": ["[0-9]+(\\.[0-9]+)?(ms|s)\\b", "/Users/[^/ ]+", "/home/[^/ ]+"],
+        "timeoutSec": 120
+      }
+    }
+  ]
+}

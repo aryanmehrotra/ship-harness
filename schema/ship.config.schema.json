@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/aryanmehrotra/ship-harness/main/schema/ship.config.schema.json",
+  "title": "ship.config.json",
+  "description": "Per-repo configuration for the ship-harness plugin.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "tracker": {
+      "type": "object",
+      "description": "Where ticket state lives. 'none' keeps it in .evidence/status.md.",
+      "additionalProperties": true,
+      "properties": {
+        "kind": { "type": "string", "enum": ["github", "none"], "default": "none" }
+      }
+    },
+    "testPaths": {
+      "type": "array",
+      "description": "Globs the phase guard freezes during the review and fix phases. Set these to match your ecosystem — the defaults only cover the common cases.",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "attribution": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether generated PR bodies and status comments carry an AI-assistance footer."
+    },
+    "caps": {
+      "type": "object",
+      "description": "Loop limits. Uncapped review converges on approval, because the reviewer knows the loop ends when it approves.",
+      "additionalProperties": false,
+      "properties": {
+        "reviewA": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3 },
+        "reviewB": { "type": "integer", "minimum": 1, "maximum": 10, "default": 2 },
+        "evidenceFix": { "type": "integer", "minimum": 0, "maximum": 10, "default": 2 }
+      }
+    },
+    "reviewers": {
+      "type": "object",
+      "description": "Model tier per review round. Two different models is the point; collapsing them to one removes the independence the second round exists for.",
+      "additionalProperties": false,
+      "properties": {
+        "correctness": { "type": "string", "default": "sonnet" },
+        "design": { "type": "string", "default": "opus" }
+      }
+    },
+    "memoryCaps": {
+      "type": "object",
+      "description": "Hard line caps on docs/memory. Adding is easy and removing takes judgement, so without a cap you get a file nobody trusts within two months.",
+      "additionalProperties": false,
+      "properties": {
+        "map": { "type": "integer", "default": 100 },
+        "patterns": { "type": "integer", "default": 60 },
+        "decisions": { "type": "integer", "default": 40 },
+        "scars": { "type": "integer", "default": 30 },
+        "glossary": { "type": "integer", "default": 40 },
+        "conventions": { "type": "integer", "default": 40 }
+      }
+    },
+    "collectors": {
+      "type": "array",
+      "description": "Evidence collectors, run in order by scripts/collect.sh.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "Report goes to .evidence/<name>.json; baselines to .evidence/baseline/<name>/."
+          },
+          "kind": {
+            "type": "string",
+            "description": "A bundled collector.",
+            "enum": ["builtin:web-shots", "builtin:http-pairs", "builtin:cmd-golden", "builtin:tests"]
+          },
+          "cmd": {
+            "type": "string",
+            "description": "Any executable obeying collectors/CONTRACT.md. Mutually exclusive with 'kind'."
+          },
+          "config": {
+            "type": "object",
+            "description": "Passed to the collector verbatim as the SHIP_COLLECTOR_CONFIG environment variable.",
+            "additionalProperties": true
+          }
+        },
+        "oneOf": [{ "required": ["kind"] }, { "required": ["cmd"] }]
+      }
+    }
+  },
+  "required": ["collectors"]
+}

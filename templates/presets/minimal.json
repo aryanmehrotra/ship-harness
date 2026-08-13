@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/aryanmehrotra/ship-harness/main/schema/ship.config.schema.json",
+  "tracker": { "kind": "none" },
+  "testPaths": ["tests/**", "test/**", "spec/**"],
+  "attribution": false,
+  "caps": { "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
+  "reviewers": { "correctness": "sonnet", "design": "opus" },
+  "collectors": [
+    { "name": "tests", "kind": "builtin:tests", "config": { "cmd": "echo 'set collectors[0].config.cmd in ship.config.json' && false" } }
+  ]
+}
