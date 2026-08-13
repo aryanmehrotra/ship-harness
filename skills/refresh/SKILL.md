@@ -10,11 +10,21 @@ judgement call — which is the only reason this stays cheap enough to actually 
 
 1. **Re-run each line's grep.** If the count dropped or the cited path is gone, mark the line
    `STALE`. Do not delete it yet: one bad refresh should not silently erase real knowledge.
+
+   **`references.md` is the exception** — its lines cite things outside the repo, so a grep
+   proves nothing. Verify those differently: for a dependency claim, check the version in the
+   line still matches the manifest or lockfile and re-open the cited `file:symbol`; for a
+   doc, paper or RFC, re-open the cited section. A line whose pinned version has moved on is
+   `STALE` even if it was true when written — an upgrade is exactly when library behaviour
+   stops matching what someone remembered. A citation that cannot be opened at all is deleted
+   on the first pass rather than the second: an unopenable source is not knowledge, and
+   leaving it in place lends it credibility it never earned.
 2. **`STALE` on two consecutive refreshes → delete**, and log the commit that killed it.
 3. **`verified:` older than 90 days → re-verify or drop.** An unverified line that keeps
    getting cited is worse than a missing one.
 4. **Enforce the caps** from `memoryCaps` in `ship.config.json` (defaults: map 100,
-   patterns 60, decisions 40, scars 30, glossary 40). Over cap → merge duplicates first, then
+   patterns 60, decisions 40, scars 30, glossary 40, references 40). Over cap → merge duplicates
+   first, then
    drop the lowest-confidence lines.
 
    **Never grow a file to fit.** The cap is the mechanism: it forces the merge-or-drop

@@ -13,6 +13,11 @@ concurrency and ordering, resource leaks, anything in the diff the plan did not 
 (scope creep), and anything the diff duplicates that already exists in the repo — grep the
 new symbols against the existing tree before you finish.
 
+Check every claim the diff makes about code this repo did not write — a library's error
+semantics, a default, a retry, whether a context is honoured. If the plan or a comment asserts
+it and no official source at the pinned version backs it, open the dependency yourself. Being
+wrong about a third-party default is a real defect that reads as a detail.
+
 **Not in scope:** architecture, naming taste, future extensibility. Round B covers those,
 and repeating them here wastes the only two independent looks this change gets.
 

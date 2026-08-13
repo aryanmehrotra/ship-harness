@@ -471,11 +471,17 @@ if run_test "plan-review-wired" ; then
   missing=""
   for a in "$ROOT"/agents/*.md; do
     n=$(basename "$a" .md)
-    grep -q "$n" "$ROOT/skills/ship/SKILL.md" || missing="$missing $n"
+    grep -qr "$n" "$ROOT"/skills/*/SKILL.md || missing="$missing $n"
   done
-  for c in planReviewA planReviewB; do
+  for c in planReviewA planReviewB spikes research reviewDelta; do
     grep -q "$c" "$ROOT/schema/ship.config.schema.json" || missing="$missing schema:$c"
-    grep -q "$c" "$ROOT/skills/ship/SKILL.md" || missing="$missing skill:$c"
+    grep -qr "$c" "$ROOT"/skills/*/SKILL.md || missing="$missing skill:$c"
+  done
+  # A memory template nothing maintains rots; a maintainer for a file that does not exist
+  # fails at write time, deep in a run.
+  for m in "$ROOT"/templates/memory/*.md; do
+    n=$(basename "$m" .md)
+    grep -qr "memory/$n" "$ROOT"/skills/*/SKILL.md || missing="$missing memory:$n"
   done
   [ -z "$missing" ] && ok "plan-review-wired: every agent is dispatched, every cap is declared" \
                     || bad "plan-review-wired" "$missing"

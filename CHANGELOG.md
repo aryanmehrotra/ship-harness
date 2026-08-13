@@ -4,6 +4,47 @@ Notable changes, newest first. Versions follow [semver](https://semver.org). The
 `.claude-plugin/plugin.json` is what Claude Code installs against — CI fails the build if
 this file, that file and the git tag disagree.
 
+## 0.4.0
+
+**A second entry point: `/ship-harness:review` — review someone else's PR by planning the
+ticket yourself first, then comparing blind.** And a rule for both skills: anything the repo
+did not write gets verified at its official source, at the version it pins.
+
+- `skills/review/SKILL.md` — reads the ticket and mines precedent **before opening the diff**
+  (once you have seen the implementation, every "independent" plan rhymes with it), writes a
+  shadow plan for the *simplest* thing that satisfies the ticket, runs it through the same
+  two plan-review rounds, then rewrites the PR as a plan in the same template and compares.
+- `agents/reviewer-delta.md` (opus) — receives the two plans **labelled only A and B**, is
+  never told which shipped, and reports which is simpler and where each is weaker. You wrote
+  one of them, which makes shuffling the cheapest available correction for authorship bias.
+- **`equivalent` is a first-class verdict.** Most differences between two competent plans are
+  not defects, and the report lists what it deliberately did *not* flag — a review that only
+  lists complaints is a rewrite request no matter how it is worded.
+- Deltas where the **PR was stronger** are learned into `docs/memory`, not reported.
+- **External claims must cite an official source at the pinned version** — the project's own
+  repo or docs, the standards body's own document, the vendor's reference. Tutorials, doc
+  mirrors, StackOverflow and AI summaries are pointers, never citations. Where behaviour
+  matters, read the source, not the prose. Both plan reviewers and `reviewer-correctness`
+  now treat an uncited or unversioned third-party claim as a finding.
+- **Where the repo is silent, consult real work**: installed skills that encode books first
+  (they carry a bibliography rather than a recollection), then primary sources — papers,
+  RFCs, official docs. Capped by `caps.research` (default 3). Literature never outranks a
+  convention already in the code; that argument is an ADR.
+- `docs/memory/references.md` — new capped memory file recording what was looked up, the
+  source, the pinned version and where it was applied. `refresh` verifies these by re-opening
+  the citation rather than by grep, and marks a line `STALE` when the pinned version moves on.
+- New caps `research` (3) and `reviewDelta` (2); new `memoryCaps.references` (40).
+- **Review budgets are yours, and confirmed before first use.** Every cap moves to
+  `ship.config.json`, `/ship-harness:init` step 3.5 shows the table and waits for a yes, and
+  `ship` and `review` **refuse to run** while `setup.confirmedAt` is null — a budget nobody
+  chose is a default nobody owns. `0` removes the count entirely and runs the loop to
+  convergence: it ends when a round raises no new finding. Since the approval bias does not
+  go away with the count, two rules take its place — no round may approve while it is still
+  raising findings, and every round is logged, so "converged on round nine" is visible rather
+  than summarised away.
+- `test/run.sh`: the wiring test now scans every skill, and asserts each memory template has
+  a maintainer.
+
 ## 0.3.0
 
 **The plan now says how it will be tested, and measures what it does not know.** Acceptance

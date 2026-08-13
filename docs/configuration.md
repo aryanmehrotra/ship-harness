@@ -10,9 +10,10 @@ the `$schema` key for completion.
   "tracker":    { "kind": "github" },
   "testPaths":  ["**/*_test.go", "test/**"],
   "attribution": false,
-  "caps":       { "spikes": 3, "planReviewA": 3, "planReviewB": 2, "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
+  "setup":      { "confirmedAt": "2026-08-13" },
+  "caps":       { "research": 3, "reviewDelta": 2, "spikes": 3, "planReviewA": 3, "planReviewB": 2, "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
   "reviewers":  { "correctness": "sonnet", "design": "opus" },
-  "memoryCaps": { "map": 100, "patterns": 60, "decisions": 40, "scars": 30, "glossary": 40, "conventions": 40 },
+  "memoryCaps": { "map": 100, "patterns": 60, "decisions": 40, "scars": 30, "glossary": 40, "references": 40, "conventions": 40 },
   "collectors": [ { "name": "tests", "kind": "builtin:tests", "config": { "cmd": "go test ./..." } } ]
 }
 ```
@@ -60,6 +61,8 @@ requires disclosure.
 
 | Field | Default | Limits |
 |---|---|---|
+| `research` | `3` | official-source lookups for decisions the repo has no precedent for |
+| `reviewDelta` | `2` | blind plan-vs-plan comparison rounds in `/ship-harness:review` |
 | `spikes` | `3` | throwaway probes run in S2.5 to answer an open question with a number |
 | `planReviewA` | `3` | plan-correctness rounds in S2.5, before the user sees the draft |
 | `planReviewB` | `2` | plan-architecture rounds |
@@ -74,9 +77,28 @@ the same finding in `reviewB` costs the implementation.
 throwaway code, which is cheap; an unbounded spike loop is building the thing twice, once
 badly. At the cap the harness hands the open question to a human instead.
 
-Raising these does not buy more quality. An uncapped review loop converges on approval,
-because the reviewer knows the loop ends when it approves — see
+**`0` means no fixed cap.** The loop then runs until a round produces no new findings. Two
+rules make that safe: no round may approve while it is still raising findings, and every round
+is logged, so a run that converged on round nine is visible as one.
+
+Which to pick is a real trade-off, not a default to accept quietly. A count stops a loop that
+is still making progress and lets a loop going in circles run to the limit. Convergence is the
+better signal — but a reviewer knows the loop ends when it approves, so unbounded loops drift
+that way; see
 [design-rules.md](design-rules.md#3-two-reviewers-different-models-no-write-tools-capped).
+
+## `setup`
+
+```json
+"setup": { "confirmedAt": "2026-08-13" }
+```
+
+Written by `/ship-harness:init` once you have seen the caps table and confirmed or changed it.
+**`ship` and `review` refuse to run while this is null or missing** — they stop and ask.
+
+That gate exists because these numbers decide how many rounds, and how much money, every
+future run spends. A budget nobody chose is a default nobody owns, and defaults get noticed
+only after the bill.
 
 ## `reviewers`
 

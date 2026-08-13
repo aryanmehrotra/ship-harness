@@ -66,6 +66,43 @@ echo plan > .evidence/phase
 `cp -n` throughout: never clobber a `docs/conventions.md` or a memory file that already has
 content in it.
 
+## 3.5 Confirm the loop budgets — do not skip, do not assume
+
+**The harness refuses to run until the user has confirmed these.** A budget nobody chose is a
+default nobody owns, and these decide how many rounds — and how much money — every future run
+spends.
+
+Show the table, say what each one buys, and ask for a yes or a change. **One message, then
+wait for the answer.** Do not proceed because the defaults look reasonable.
+
+| Cap | Default | What it bounds |
+|---|---|---|
+| `planReviewA` / `planReviewB` | 3 / 2 | rounds reviewing the plan before the user sees it |
+| `reviewA` / `reviewB` | 3 / 2 | rounds reviewing the diff |
+| `reviewDelta` | 2 | blind plan-vs-plan rounds in `/ship-harness:review` |
+| `spikes` | 3 | throwaway probes that answer an open question with a number |
+| `research` | 3 | official-source lookups where the repo has no precedent |
+| `evidenceFix` | 2 | fix-and-recollect cycles |
+
+**`0` means no fixed cap** — the loop runs until a round produces **no new findings**, then
+stops. Say the tradeoff out loud when you ask, because it is a real one:
+
+> A count stops a loop that is still making progress, and lets a loop going in circles run
+> all the way to the limit; convergence is the better signal. But a reviewer knows the loop
+> ends when it approves, so an unbounded loop drifts toward approval. Uncapped, no round may
+> approve while it is still raising findings, and every round is logged — so a run that
+> "converged" on round nine is visible as one.
+
+Record the answer, and only then is the repo initialised:
+
+```bash
+jq --arg d "$(date -u +%Y-%m-%d)" '.setup = {confirmedAt: $d}' ship.config.json > .tmp \
+  && mv .tmp ship.config.json
+```
+
+If the user would rather not decide now, leave `confirmedAt: null` and tell them plainly that
+`ship` and `review` will stop and ask on first use. That is the design, not a bug.
+
 ## 4. Ignore rules — append, never replace
 
 ```bash

@@ -28,6 +28,17 @@ bash "$PLUGIN/scripts/tracker.sh" kind
 If `ship.config.json` is missing, stop and tell the user to run `/ship-harness:init`. Do not
 improvise the layout; every later step reads that config.
 
+```bash
+jq -e '.setup.confirmedAt // empty' ship.config.json >/dev/null \
+  || echo "LOOP BUDGETS NOT CONFIRMED — run /ship-harness:init step 3.5"
+```
+
+**If `setup.confirmedAt` is missing or null, stop.** Show the caps table from
+`/ship-harness:init` step 3.5, ask the user to confirm or change it, write the answer, and
+only then continue. These budgets decide how many rounds every run spends; running on
+defaults nobody agreed to is how a harness quietly costs more than it saves.
+
+
 Write the phase at every transition. The `phase-guard` hook reads this file, so a stale value
 is the difference between tests being frozen and not:
 
@@ -105,6 +116,56 @@ attention on the cheapest decisions in the ticket.
 
 If an `[N]` decision is architectural or hard to reverse, draft
 `docs/adr/NNNN-<slug>.md` from `$PLUGIN/templates/adr.md` alongside the plan.
+
+### S1.5 — For `[N]` decisions only, consult a real source
+
+The repo has nothing to say, which is exactly when an agent invents a confident answer.
+Check `docs/memory/references.md` first — this repo may already have looked it up — then:
+
+1. **Installed skills that encode books** — a Go review skill built on *100 Go Mistakes*, a
+   design skill on *Designing Data-Intensive Applications*, one on *Building Microservices*,
+   on API design, resiliency, sagas, observability. Local, cheap, and carrying a real
+   bibliography instead of a recollection.
+2. **Primary sources** — the paper, the RFC, the spec, the database's or language's own
+   documentation. Read the relevant section, not a summary of it.
+3. **Nothing else.** A blog post restating a paper is not the paper.
+
+**Name the work, the author and the chapter or clause, or you do not have a citation.** Say
+"no authoritative source found" and argue on the repo's own terms rather than inventing a
+section title. A fabricated citation survives review by looking like evidence, which is what
+makes it worse than silence.
+
+**Precedence is unchanged: code > `docs/memory` > repo docs > literature.** Never cite a book
+to overrule a pattern the repo already uses in two or more places — that is an ADR, argued
+explicitly, not a line in a plan. Capped at `caps.research` (default 3).
+
+### Verify every external claim at its source — binding
+
+> Any statement about something this repo did not write — a dependency, an API, a protocol,
+> a database, a cloud service, a CLI — is verified against **that thing's own documentation
+> or source code, at the version this repo actually pins**, and cited.
+
+- **Read the version you depend on**, not the latest. Get it from the manifest or lockfile,
+  then read the vendored copy, the module cache, `node_modules`, the tagged source on the
+  host, or the versioned docs. A default changed three releases ago is exactly the kind of
+  thing recollection gets wrong, and it fails in production rather than in review.
+- **Prefer the source to the prose.** When a library's behaviour matters — the error it
+  returns, whether a call is retried, what happens on a nil receiver, whether a context is
+  honoured — open the function. Documentation describes intent; the code is what runs.
+- **Official sources only.** The project's own repository, its own documentation site, the
+  standards body's own document (IETF, W3C, ISO, OWASP), or the vendor's own reference. A
+  tutorial, a documentation mirror, a StackOverflow answer, a blog restating the release
+  notes and any AI-written summary are **not** citable — they are at best a pointer to the
+  real thing, and you cite the real thing after opening it.
+- **Cite what you opened**: `<lib> v<version> — <file>:<symbol>` for source, or
+  `<official doc title> (v<version>, <section>)` with the vendor URL for docs. A citation
+  with no version is not one, because it cannot be re-checked next year.
+- **Never from memory.** Model recollection of third-party behaviour is version-blind and
+  fluent, which is the worst possible combination. If you cannot open it, write "unverified"
+  in the plan line and let the reviewers see it.
+
+This applies to the plan, the build and every review round. An uncited claim about external
+behaviour is a finding, not a detail.
 
 ## S2 — Plan, review it, then stop
 
@@ -214,6 +275,16 @@ asymmetry as S4, and for the same reason.
 
 Between rounds, apply every `blocking` and `major` finding, then re-dispatch with **fresh
 context**. Rewriting is cheap here; that is the whole point of doing it before code exists.
+
+**When a cap is `0` there is no fixed limit — the loop runs to convergence.** Stop when a
+round produces **no new findings** (repeats of an already-open finding do not count as new).
+Two further rules keep an unbounded loop honest, and they are not optional:
+
+- **No round may return `APPROVED` while it is still raising findings.** Approval means the
+  round found nothing, not that it ran out of patience.
+- **Log every round** — number, verdict, new-finding count — into the round's JSON. A run
+  that converged on round nine should look like a run that converged on round nine.
+
 
 Three rules that keep the loop honest:
 

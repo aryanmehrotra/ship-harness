@@ -70,10 +70,19 @@ tool cannot edit. Only one of those survives a long context and an inconvenient 
 Reasoning is persuasive by construction — it was optimised until it sounded right. The diff
 is not.
 
-**Why the caps:** an uncapped "review until approval" converges on approval. The reviewer
-knows the loop ends when it says APPROVED, and that is sufficient. At the cap the harness
-stops and hands the open findings to a human, which is the correct output for a genuine
-disagreement.
+**Why the caps, and why they are yours to set:** an uncapped "review until approval" converges
+on approval — the reviewer knows the loop ends when it says APPROVED, and that is sufficient.
+At the cap the harness stops and hands the open findings to a human, which is the correct
+output for a genuine disagreement.
+
+But a count is a blunt instrument in both directions: it stops a loop still making progress,
+and lets a loop going in circles run all the way to the limit. So the numbers are configured
+at `init` and **confirmed by you before first use** — the harness refuses to run on budgets
+nobody chose. Setting one to `0` removes the count and runs to convergence instead: the loop
+ends when a round raises no new finding. The approval bias does not disappear, so two rules
+carry the weight the count used to — no round may approve while it is still raising findings,
+and every round is logged, which makes "converged on round nine" visible rather than
+summarised away.
 
 **Why two tiers rather than two runs of one:** independence. Two runs of the same model share
 the same blind spots. This is also why a set `CLAUDE_CODE_SUBAGENT_MODEL` is a real problem
@@ -117,6 +126,59 @@ it is the thing you actually wanted, and no amount of review rounds converges on
 becomes four after three rounds of helpful suggestions, and the word budget was the thing
 making it readable at the gate. So every accepted finding replaces a line or removes one,
 and a finding that genuinely needs more room becomes an ADR instead.
+
+## 3b. Reviewing someone else's PR means planning it first, then comparing blind
+
+**Failure it prevents:** a diff-only review answers *is this right?* — and the answer is
+almost always yes, because the code is self-consistent and its framing is persuasive. It also
+cannot see what is missing. Nothing in a diff mentions the failure mode nobody handled.
+
+**How it works:** `/ship-harness:review` reads the ticket, mines precedent, writes its own
+plan for the *simplest* thing that satisfies it, runs that plan through the same two review
+rounds `ship` uses — and only then opens the diff. The PR is rewritten as a plan in the same
+template, and the two are handed to a third model **labelled only A and B**.
+
+**Why blind:** you wrote one of those plans. Every known bias — authorship, not-invented-here,
+the sunk cost of having thought it through — points one way, and none of them announce
+themselves. Shuffling two documents is the cheapest correction available for all of them.
+
+**Why `equivalent` is a first-class verdict:** most differences between two competent plans
+are not defects. A review that flags every divergence is a rewrite request wearing a review's
+clothes, and authors correctly learn to discount it. The report lists what it deliberately did
+*not* flag, because that is what makes the rest of it credible.
+
+**Why the shadow plan aims at simplest, not best:** an over-engineered yardstick makes every
+real PR look reasonable, which silently disables the whole skill.
+
+**Why it is a skill here and not a separate plugin:** it needs the precedent scan, the plan
+template, the plan reviewers and `docs/memory`. A standalone review tool would rebuild all
+four, and a reviewer with no access to your repo's precedent is a linter with opinions.
+
+## 3c. External claims are verified at the official source, at the pinned version
+
+**Failure it prevents:** a fluent, confident, version-blind sentence about a library's
+behaviour. Model recollection of third-party defaults is exactly wrong often enough to matter,
+and it reads identically to knowledge — so it survives review and fails in production.
+
+**How it works:** anything the repo did not write — a dependency, an API, a protocol, a cloud
+service — is checked against that project's own documentation or source, at the version in the
+manifest or lockfile, and cited as `<lib> v<version> — file:symbol` or the vendor's own doc
+plus a section. Where behaviour matters, the source beats the prose: docs describe intent, the
+code is what runs.
+
+**Why "official" is doing work in that sentence:** a tutorial, a doc mirror, a StackOverflow
+answer and an AI summary are all pointers at best. They are also where subtly-wrong claims
+come from, and citing one launders it into the plan as evidence.
+
+**Why the version is not a nicety:** a claim with no version cannot be re-checked after the
+next upgrade, which is precisely the moment it starts being false. `refresh` re-opens these
+citations and marks a line `STALE` when the pinned version has moved, even if it was true when
+written.
+
+**Why literature never outranks the code:** books and papers inform decisions this repo has
+never made. Citing an author to overrule a pattern already used in two or more places is an
+architecture argument that belongs in an ADR, made explicitly — not a review finding
+appealing to an authority the repo never agreed to follow.
 
 ## 4. A deterministic gate runs before the model looks
 

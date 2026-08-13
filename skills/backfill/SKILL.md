@@ -37,6 +37,11 @@ file.
 | `docs/memory/decisions.md` | implicit ADRs recovered from history | 40 lines |
 | `docs/memory/scars.md` | reverts, hotfixes, rollbacks | 30 lines |
 | `docs/memory/glossary.md` | domain term → code symbol | 40 lines |
+| `docs/memory/references.md` | official sources a decision actually rested on | 40 lines |
+
+`references.md` is the one file the backfill leaves empty: git history records what was
+decided, not which book or RFC section was open at the time. It fills up as `ship` and
+`review` consult real sources — inventing entries for it would be inventing citations.
 
 Every line carries provenance and is re-checkable by a grep:
 

@@ -97,6 +97,21 @@ Then, once per repo:
 /ship-harness:backfill      # builds docs/memory/ from git history — run once
 ```
 
+## Two entry points
+
+| | `/ship-harness:ship T-123` | `/ship-harness:review 412` |
+|---|---|---|
+| For | work you are doing | work someone else did |
+| Plan | written, reviewed by two models, **committed by you** | written independently from the ticket, never committed |
+| Then | build tests-first, review the diff against the plan | read the diff, rewrite it as a plan, compare the two **blind** |
+| Catches | drift, reinvention, self-approval | over-engineering, and the failure mode nobody handled |
+
+`review` reads the ticket and plans the simplest thing that satisfies it **before** opening
+the diff — because once you have seen the implementation, every "independent" plan you write
+rhymes with it. The two plans then go to a third model labelled only A and B, so the round
+cannot prefer the one you wrote. Differences that are merely different are reported as
+`equivalent` and never as findings.
+
 ## The daily loop
 
 ```

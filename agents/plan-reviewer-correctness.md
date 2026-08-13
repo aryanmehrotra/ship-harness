@@ -28,6 +28,11 @@ implementations has not decided anything, and the diff will settle it silently.
 - **Convention fit.** Compare against `docs/conventions.md`, `docs/memory/patterns.md` and
   the two or three closest existing implementations. A pattern in two or more places is the
   convention; deviating from it without a `[D]` line is a finding.
+- **External claims.** Any statement about a dependency, API, protocol or service must cite
+  an **official** source at the version the repo pins — `<lib> v<version> — file:symbol`, or
+  the vendor's own doc with a section. A behavioural claim citing nothing, citing a tutorial
+  or a mirror, or citing a version the manifest does not pin, is a finding: recollection of
+  third-party behaviour is version-blind and reads exactly like knowledge.
 - **Citations.** Open every path in `Precedent`. A citation that does not exist, or does not
   say what the line claims, is **blocking** — a fabricated citation survives review by
   looking like evidence.

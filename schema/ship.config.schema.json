@@ -26,16 +26,27 @@
       "default": false,
       "description": "Whether generated PR bodies and status comments carry an AI-assistance footer."
     },
-    "caps": {
+    "setup": {
       "type": "object",
-      "description": "Loop limits. Uncapped review converges on approval, because the reviewer knows the loop ends when it approves.",
+      "description": "Written by /ship-harness:init once the user has confirmed the loop budgets. The ship and review skills refuse to run until confirmedAt is set, because a budget nobody chose is a default nobody owns.",
       "additionalProperties": false,
       "properties": {
+        "confirmedAt": { "type": ["string", "null"], "description": "ISO date the caps were confirmed. null means never confirmed." },
+        "confirmedBy": { "type": "string" }
+      }
+    },
+    "caps": {
+      "type": "object",
+      "description": "Loop budgets. You set these at init and confirm them before first use. 0 means no fixed cap: the loop runs until a round produces no new findings. A count is a blunt instrument — it stops a loop that is still making progress and lets one that is going in circles run to the limit — so the convergence rule is the real termination criterion either way.",
+      "additionalProperties": false,
+      "properties": {
+        "research": { "type": "integer", "minimum": 0, "maximum": 10, "default": 3 },
+        "reviewDelta": { "type": "integer", "minimum": 0, "maximum": 25, "default": 2 },
         "spikes": { "type": "integer", "minimum": 0, "maximum": 10, "default": 3 },
-        "planReviewA": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3 },
-        "planReviewB": { "type": "integer", "minimum": 1, "maximum": 10, "default": 2 },
-        "reviewA": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3 },
-        "reviewB": { "type": "integer", "minimum": 1, "maximum": 10, "default": 2 },
+        "planReviewA": { "type": "integer", "minimum": 0, "maximum": 25, "default": 3 },
+        "planReviewB": { "type": "integer", "minimum": 0, "maximum": 25, "default": 2 },
+        "reviewA": { "type": "integer", "minimum": 0, "maximum": 25, "default": 3 },
+        "reviewB": { "type": "integer", "minimum": 0, "maximum": 25, "default": 2 },
         "evidenceFix": { "type": "integer", "minimum": 0, "maximum": 10, "default": 2 }
       }
     },
@@ -58,6 +69,7 @@
         "decisions": { "type": "integer", "default": 40 },
         "scars": { "type": "integer", "default": 30 },
         "glossary": { "type": "integer", "default": 40 },
+        "references": { "type": "integer", "default": 40 },
         "conventions": { "type": "integer", "default": 40 }
       }
     },
