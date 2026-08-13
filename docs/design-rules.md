@@ -79,6 +79,23 @@ disagreement.
 the same blind spots. This is also why a set `CLAUDE_CODE_SUBAGENT_MODEL` is a real problem
 rather than a nit — it silently collapses the tiers.
 
+**Why the plan gets the same treatment, in S2.5:** the cost curve. A missing failure mode
+costs one line of markdown before S3, and the implementation after it. An agent is also the
+worst possible judge of a plan it just wrote — not from dishonesty, but because the priors
+that produced the plan are the priors it would evaluate it with. So the draft goes through
+round 1 (concreteness, correctness, reliability, testability, convention fit) until it
+approves, then round 2 (architecture, responsibility, scale, blast radius, rollback) until
+it approves — same models, same caps, same no-write-tools, same never-soften rule.
+
+**Why it does not replace the human gate:** it raises the floor, not the ceiling. Reviewers
+check whether a plan is sound, internally consistent and conventional. Only you know whether
+it is the thing you actually wanted, and no amount of review rounds converges on that.
+
+**The failure mode it introduces, and the counter:** revision inflates. A one-screen plan
+becomes four after three rounds of helpful suggestions, and the word budget was the thing
+making it readable at the gate. So every accepted finding replaces a line or removes one,
+and a finding that genuinely needs more room becomes an ADR instead.
+
 ## 4. A deterministic gate runs before the model looks
 
 **Failure it prevents:** a model asked "does this look right?" says yes. Published benchmarks

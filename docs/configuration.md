@@ -10,7 +10,7 @@ the `$schema` key for completion.
   "tracker":    { "kind": "github" },
   "testPaths":  ["**/*_test.go", "test/**"],
   "attribution": false,
-  "caps":       { "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
+  "caps":       { "planReviewA": 3, "planReviewB": 2, "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
   "reviewers":  { "correctness": "sonnet", "design": "opus" },
   "memoryCaps": { "map": 100, "patterns": 60, "decisions": 40, "scars": 30, "glossary": 40, "conventions": 40 },
   "collectors": [ { "name": "tests", "kind": "builtin:tests", "config": { "cmd": "go test ./..." } } ]
@@ -60,9 +60,14 @@ requires disclosure.
 
 | Field | Default | Limits |
 |---|---|---|
+| `planReviewA` | `3` | plan-correctness rounds in S2.5, before the user sees the draft |
+| `planReviewB` | `2` | plan-architecture rounds |
 | `reviewA` | `3` | correctness rounds before handing findings to a human |
 | `reviewB` | `2` | design rounds |
 | `evidenceFix` | `2` | fix-and-recollect cycles |
+
+The plan rounds are the cheapest of the five: a finding there costs a line of markdown,
+the same finding in `reviewB` costs the implementation.
 
 Raising these does not buy more quality. An uncapped review loop converges on approval,
 because the reviewer knows the loop ends when it approves — see

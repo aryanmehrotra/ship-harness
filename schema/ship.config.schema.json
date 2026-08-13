@@ -31,6 +31,8 @@
       "description": "Loop limits. Uncapped review converges on approval, because the reviewer knows the loop ends when it approves.",
       "additionalProperties": false,
       "properties": {
+        "planReviewA": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3 },
+        "planReviewB": { "type": "integer", "minimum": 1, "maximum": 10, "default": 2 },
         "reviewA": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3 },
         "reviewB": { "type": "integer", "minimum": 1, "maximum": 10, "default": 2 },
         "evidenceFix": { "type": "integer", "minimum": 0, "maximum": 10, "default": 2 }

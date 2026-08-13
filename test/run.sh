@@ -458,6 +458,42 @@ if run_test "plan-template-shape"; then
 fi
 
 echo
+echo "agents"
+
+if run_test "reviewers-read-only"; then
+  # "Reviewers cannot edit" is a property of the tool list, not of the prompt. A reviewer
+  # that gains a write tool still reads as read-only everywhere else in the repo.
+  bad_agents=""
+  for a in "$ROOT"/agents/*.md; do
+    fm=$(awk 'NR>1 && /^---$/{exit} NR>1' "$a")
+    printf '%s' "$fm" | grep -q '^model:' || bad_agents="$bad_agents $(basename "$a"):no-model"
+    tools=$(printf '%s' "$fm" | grep '^tools:' || true)
+    [ -n "$tools" ] || bad_agents="$bad_agents $(basename "$a"):no-tools"
+    case "$tools" in
+      *Write*|*Edit*|*Bash*) bad_agents="$bad_agents $(basename "$a"):writes" ;;  # *Edit* covers NotebookEdit
+    esac
+  done
+  [ -z "$bad_agents" ] && ok "reviewers-read-only: every agent declares a model and no write tool" \
+                       || bad "reviewers-read-only" "$bad_agents"
+fi
+
+if run_test "plan-review-wired" ; then
+  # An agent nobody dispatches is dead weight, and a dispatch naming an agent that does not
+  # exist fails at the worst possible moment — mid-run, after the interview.
+  missing=""
+  for a in "$ROOT"/agents/*.md; do
+    n=$(basename "$a" .md)
+    grep -q "$n" "$ROOT/skills/ship/SKILL.md" || missing="$missing $n"
+  done
+  for c in planReviewA planReviewB; do
+    grep -q "$c" "$ROOT/schema/ship.config.schema.json" || missing="$missing schema:$c"
+    grep -q "$c" "$ROOT/skills/ship/SKILL.md" || missing="$missing skill:$c"
+  done
+  [ -z "$missing" ] && ok "plan-review-wired: every agent is dispatched, every cap is declared" \
+                    || bad "plan-review-wired" "$missing"
+fi
+
+echo
 echo "======================="
 printf 'passed %d · failed %d · skipped %d\n\n' "$PASS" "$FAIL" "$SKIP"
 [ "$FAIL" -eq 0 ] || exit 1

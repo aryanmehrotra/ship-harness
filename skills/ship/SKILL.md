@@ -106,7 +106,7 @@ attention on the cheapest decisions in the ticket.
 If an `[N]` decision is architectural or hard to reverse, draft
 `docs/adr/NNNN-<slug>.md` from `$PLUGIN/templates/adr.md` alongside the plan.
 
-## S2 — Plan, then stop
+## S2 — Plan, review it, then stop
 
 Write `docs/plans/<TICKET>.md` from `$PLUGIN/templates/plan.md`, headings exactly as in the
 template — S4 and S7 both parse them.
@@ -137,6 +137,62 @@ reviewers with no other context. Both are served by precision; neither is served
 - A `before / after` pair only when an existing flow is re-routed. Otherwise one diagram.
 - If you cannot draw it, you do not yet understand it — go back to S0 rather than
   covering the gap with words.
+
+### S2.5 — Review the plan before the user ever sees it
+
+The draft is not the plan. Run it through the same two-model gauntlet the diff gets, in the
+same order, for the same reason: a finding at this stage costs a line of markdown, and the
+identical finding after S3 costs the implementation. **Do not skip this because the plan
+looks good — you wrote it, which is precisely why you are the worst judge of it.**
+
+Give each reviewer exactly four things: the ticket, the current draft, `.evidence/precedent.md`,
+and the prior round's findings. **Never your reasoning about the plan** — a reviewer that has
+read why you chose something reviews the justification, and justifications are persuasive by
+construction.
+
+- **Round 1 — `plan-reviewer-correctness` (sonnet).** Concreteness, correctness, reliability
+  and failure modes, testability of every acceptance criterion, convention fit, citation
+  validity, diagram-versus-text agreement. Cap from `caps.planReviewA` (default 3).
+- **Round 2 — `plan-reviewer-architecture` (opus), only after round 1 approves.**
+  Architecture, responsibility boundaries, scalability at 10×, blast radius, operability and
+  rollback, reversibility, precedent fidelity, and whether this solves the ticket or a nearby
+  easier problem. Cap from `caps.planReviewB` (default 2).
+
+Each subagent has no write tools and returns one JSON object as its final message. **You**
+write it to `.evidence/plan-review-a.json` and `.evidence/plan-review-b.json` — the same
+asymmetry as S4, and for the same reason.
+
+```json
+{"verdict":"APPROVED|CHANGES_REQUESTED",
+ "findings":[{"severity":"blocking|major|minor","section":"<plan heading>",
+              "issue":"","why_it_matters":"","suggested_edit":""}]}
+```
+
+Between rounds, apply every `blocking` and `major` finding, then re-dispatch with **fresh
+context**. Rewriting is cheap here; that is the whole point of doing it before code exists.
+
+Three rules that keep the loop honest:
+
+- **The budget survives the loop.** Revision is how a one-screen plan becomes four. Every
+  accepted finding replaces a line or removes one. If a finding genuinely needs more room,
+  it is an ADR: draft it and cite it in a single line.
+- **A round-2 fix to `Goal`, `Shape` or `Acceptance criteria` re-opens round 1 — once.** An
+  architectural fix can break a correctness property that was already checked. Once, not
+  until it settles: a second re-open means the two reviewers disagree, which is a fact for
+  the user, not a loop to grind out.
+- **Never approve on your own behalf, and never accept a finding you think is wrong.**
+  Disagreeing is allowed; record the disagreement as an `Open risk` line with the reviewer's
+  concern in it. Silently complying with a wrong finding is the failure mode here — it looks
+  identical to agreement and it is how a plan gets worse under review.
+
+At the cap without approval, stop. Leave the unresolved findings in the handoff message and
+add the ones you are choosing to accept to `## Open risks I'm accepting`, each tagged
+`[unresolved-review]`. If a review surfaced a genuine `[N]` or `[D]` decision that S1 missed,
+you may ask **one** more question — batched into the handoff, not a second interview.
+
+This gate raises the floor; it does not replace the human one. Say what the reviews changed
+in two lines when you hand over, so the user is reading a plan that has already survived
+scrutiny rather than checking whether it did.
 
 Then **stop and say so plainly.** The user edits the plan and commits it. That commit is the
 approval gate. On the next invocation, do not proceed if `docs/plans/<TICKET>.md` is missing

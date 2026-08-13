@@ -76,7 +76,10 @@ Expect this to be imperfect on the first pass. It is derived and disposable; the
 ```
 
 **First invocation** mines precedent, asks at most five questions, writes
-`docs/plans/T-123.md`, and stops.
+`docs/plans/T-123.md`, puts that draft through two model review rounds — round 1 for
+concreteness, correctness and reliability, round 2 for architecture, scale and blast radius
+— and stops. The findings land in `.evidence/plan-review-a.json` and `-b.json` if you want
+to see what it argued with itself about.
 
 The plan fits one screen: bullets, no paragraphs, and a `Shape` section with an ASCII
 diagram of what the change touches — nodes marked `*` are the ones it adds or modifies.

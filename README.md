@@ -43,7 +43,9 @@ flowchart TD
     A[/ship TICKET/] --> S0
     S0[["S0 · precedent<br/><i>git mining, no model</i>"]] --> S1
     S1[["S1 · interview<br/><i>≤5 questions, only what precedent can't answer</i>"]] --> S2
-    S2[["S2 · plan → <b>STOP</b>"]] --> GATE
+    S2[["S2 · plan<br/><i>one screen, ASCII shape diagram</i>"]] --> S25A
+    S25A[["S2.5 · plan review A — concrete, correct, reliable<br/><i>read-only · cap 3</i>"]] --> S25B
+    S25B[["S2.5 · plan review B — architecture, scale, blast radius<br/><i>read-only · cap 2</i>"]] --> GATE
 
     GATE{{"you edit it<br/>you commit it"}}:::gate --> S3
     GATE -. "the commit IS the approval" .-> GATE
@@ -97,7 +99,7 @@ Then, once per repo:
 ## The daily loop
 
 ```
-/ship-harness:ship T-123     → mines precedent, asks ≤5 questions, writes docs/plans/T-123.md, STOPS
+/ship-harness:ship T-123     → precedent → ≤5 questions → plan → two models review the PLAN → STOPS
 <you edit it>                → fix what it got wrong. This is where you do your thinking.
 git commit                   → this is the approval gate
 /ship-harness:ship T-123     → build → review A → review B → evidence → report → issue comment
