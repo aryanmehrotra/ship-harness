@@ -172,6 +172,30 @@ if run_test "preflight-ready"; then
     || bad "preflight-ready" "$(echo "$out" | tr -d '\n')"
 fi
 
+if run_test "version-check"; then
+  # This runs on every ship and review. If it can exit non-zero or emit junk, it can break
+  # a run over something as unimportant as GitHub being slow.
+  out=$(bash "$ROOT/scripts/version-check.sh" 2>/dev/null); rc=$?
+  cur=$(jq -r '.version' "$ROOT/.claude-plugin/plugin.json")
+  got=$(echo "$out" | jq -r '.current' 2>/dev/null)
+  keys=$(echo "$out" | jq -r 'has("current") and has("latest") and has("behind")' 2>/dev/null)
+  [ "$rc" = "0" ] && [ "$keys" = "true" ] && [ "$got" = "$cur" ] \
+    && ok "version-check: exits 0 and reports the installed version" \
+    || bad "version-check" "rc=$rc got=$got want=$cur out=$out"
+fi
+
+if run_test "version-unreachable"; then
+  # An unreachable releases endpoint must degrade to "unknown", never to a failed run.
+  out=$(SHIP_HARNESS_REPO="ship-harness/definitely-not-a-real-repo-$$" \
+        XDG_CACHE_HOME="$TMPROOT/nocache" \
+        bash "$ROOT/scripts/version-check.sh" --force 2>/dev/null); rc=$?
+  src=$(echo "$out" | jq -r '.source' 2>/dev/null)
+  bhd=$(echo "$out" | jq -r '.behind' 2>/dev/null)
+  [ "$rc" = "0" ] && [ "$src" = "none" ] && [ "$bhd" = "false" ] \
+    && ok "version-unreachable: a dead endpoint is unknown, not a failure" \
+    || bad "version-unreachable" "rc=$rc src=$src behind=$bhd out=$out"
+fi
+
 if run_test "executable"; then
   notexec=""
   for f in "$ROOT"/scripts/*.sh "$ROOT"/collectors/*.sh "$ROOT"/hooks/*.sh; do

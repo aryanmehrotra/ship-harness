@@ -36,6 +36,22 @@ bash "$PLUGIN/scripts/preflight.sh"
 
 Empty `needs[]` → say nothing and continue.
 
+**If `harness.behind` is true, say so once, in one line, and carry on.** Never block a run on
+it and never re-raise it later in the same run:
+
+```
+ship-harness 0.5.0 → 0.6.0 available · /plugin marketplace update ship-harness
+```
+
+The update itself is the user's to run — Claude Code owns the plugin cache, and a script that
+edits `installed_plugins.json` behind it is how an install ends up in a state neither side
+believes in. A vendored install (`install.sh`) is different: there the files are in-tree, so
+offer to re-run the installer.
+
+The check is cached for a day and silent when offline or rate-limited. A version notice that
+can fail a run is worse than no version notice.
+
+
 Only `confirm-budgets` blocks: those numbers decide how many rounds and how much money every
 future run spends, and a default nobody chose is the kind of thing noticed after the bill.
 Everything else is the harness's own maintenance, and asking a user to type `backfill` is

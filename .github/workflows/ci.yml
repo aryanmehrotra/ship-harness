@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the version-bump check needs a merge-base with the target branch
 
       - name: Install shellcheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
@@ -48,6 +50,26 @@ jobs:
           for p in templates/presets/*.json; do
             ajv validate -s schema/ship.config.schema.json -d "$p" --spec=draft7 --strict=false
           done
+
+      # A surface change that forgets the bump ships to nobody: Claude Code caches by
+      # version, so users keep running the old copy and no error ever says why.
+      - name: Shipped surface changed ⇒ version bumped
+        if: github.event_name == 'pull_request'
+        run: |
+          base="origin/${{ github.base_ref }}"
+          git fetch -q origin "${{ github.base_ref }}"
+          changed=$(git diff --name-only "$base"...HEAD \
+            -- skills agents scripts collectors hooks templates schema | wc -l | tr -d ' ')
+          if [ "$changed" -eq 0 ]; then echo "no surface change"; exit 0; fi
+          now=$(jq -r '.version' .claude-plugin/plugin.json)
+          was=$(git show "$base:.claude-plugin/plugin.json" | jq -r '.version')
+          if [ "$now" = "$was" ]; then
+            echo "$changed shipped file(s) changed but plugin.json is still $now"
+            echo "bump the version, add a CHANGELOG section, and tag vX.Y.Z"
+            exit 1
+          fi
+          grep -q "^## $now\$" CHANGELOG.md || { echo "CHANGELOG.md has no '## $now' section"; exit 1; }
+          echo "$was -> $now, changelog present"
 
       - name: Test suite
         run: bash test/run.sh

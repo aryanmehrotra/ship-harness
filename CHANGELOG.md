@@ -4,6 +4,29 @@ Notable changes, newest first. Versions follow [semver](https://semver.org). The
 `.claude-plugin/plugin.json` is what Claude Code installs against — CI fails the build if
 this file, that file and the git tag disagree.
 
+## 0.6.0
+
+**The harness notices when it is out of date, and CI refuses a change that forgets to say so.**
+
+- `scripts/version-check.sh` — compares the installed version against the latest release.
+  Cached for 24h, 3-second timeout, and **silent on every failure path**: no network, no `gh`,
+  rate-limited, private repo and 404 all report `unknown` rather than failing. A version check
+  that can break someone's run is worse than no version check. `SHIP_HARNESS_REPO` overrides
+  the source, so a fork points at its own releases and the failure path stays testable.
+- Preflight carries a `harness` block, so `ship` and `review` mention an available update
+  **once, in one line**, and carry on. The update stays the user's to run: Claude Code owns
+  the plugin cache, and a script editing `installed_plugins.json` behind it leaves the install
+  in a state neither side believes in. Vendored installs are offered the re-run instead.
+- A local build ahead of the published release is not "behind" — that is the normal state for
+  whoever is working on the harness, and nagging them about it trains the notice to be ignored.
+- CI: any change under `skills`, `agents`, `scripts`, `collectors`, `hooks`, `templates` or
+  `schema` must bump `plugin.json` and carry a matching `CHANGELOG` section. Claude Code caches
+  by version, so a surface change that forgets the bump ships to nobody and nothing says why.
+- Two tests: `version-check` and `version-unreachable`. The second found a real defect on its
+  first run — `gh api` prints its 404 body to stdout, so an unvalidated capture became the
+  "latest version", emitting malformed JSON into preflight and telling every user they were
+  behind. The version string is now shape-checked before it is believed.
+
 ## 0.5.0
 
 **Five commands become three, and you type two of them.** `init`, `backfill` and `refresh` are

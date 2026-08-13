@@ -53,6 +53,12 @@ fi
 gaps=0
 [ -f .evidence/memory-gaps.md ] && gaps=$(grep -cE '^- ' .evidence/memory-gaps.md 2>/dev/null || echo 0)
 
+# --- harness version ---------------------------------------------------------
+# Cached for a day and silent when offline. A run must never fail because GitHub is down.
+upd='{"current":"unknown","latest":"unknown","behind":false,"checked":"","source":"none"}'
+vc="$(dirname "${BASH_SOURCE[0]}")/version-check.sh"
+[ -x "$vc" ] && upd=$(bash "$vc" 2>/dev/null || echo "$upd")
+
 # --- run state ---------------------------------------------------------------
 phase="none"; [ -f .evidence/phase ] && phase=$(tr -d '[:space:]' < .evidence/phase)
 repo_commits=$(git rev-list --count HEAD 2>/dev/null || echo 0)
@@ -71,6 +77,7 @@ printf '  "confirmedAt": %s,\n'       "$confirmed_at"
 printf '  "memory": { "files": %d, "lines": %d, "empty": %s, "ageDays": %d },\n' \
   "$mem_files" "$mem_lines" "$(json_bool $mem_empty)" "$mem_age"
 printf '  "openGaps": %d,\n'          "$gaps"
+printf '  "harness": %s,\n'          "$upd"
 printf '  "phase": "%s",\n'           "$phase"
 printf '  "repoCommits": %d,\n'       "$repo_commits"
 printf '  "needs": [%s]\n'            "$(IFS=,; echo "${needs[*]:-}")"
