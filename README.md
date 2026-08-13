@@ -123,7 +123,8 @@ Two properties make this cheap enough to run on every change:
 
 ## The four rules everything else serves
 
-1. **The plan is the contract.** A committed file, not chat history.
+1. **The plan is the contract.** A committed file, not chat history — one screen, bullets
+   and a required ASCII diagram, so it is still read at the moment it has to hold.
 2. **Reviewers cannot edit. The fixer cannot touch tests.** Reviewers have no write tools at
    all; the test freeze is a `PreToolUse` hook. Neither is a request in a prompt.
 3. **A deterministic gate runs before the model looks.** Pixel diffs, console errors, failed

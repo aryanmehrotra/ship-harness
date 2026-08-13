@@ -23,6 +23,17 @@ later.
 what you committed. Your edits are the highest-quality training signal available — they are
 corrections on concrete work — and they become `docs/conventions.md`.
 
+**Why it is capped at one screen and must contain a diagram:** the plan is load-bearing at
+exactly two moments — when you decide whether to approve it, and when a reviewer checks a
+diff against it. Both are skim-under-pressure. A two-page plan gets approved unread, which
+turns the gate into a formality while it still looks like a gate: strictly worse than not
+having one. Length is also where an agent hides uncertainty, because prose can restate a
+ticket convincingly without deciding anything; a word budget makes that visible instead of
+comfortable. The diagram closes the same gap from the other side — naming the boxes and the
+edges forces the decisions prose defers, and it shows blast radius, which is the first thing
+round B goes looking for. ASCII specifically, because the plan is read in a terminal, a PR
+body and a `git diff`, and it is the only format that survives all three unrendered.
+
 ## 2. Precedent before planning, and reuse is binding
 
 **Failure it prevents:** a second date formatter. A third HTTP client. A fourth error type

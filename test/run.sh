@@ -437,6 +437,26 @@ if run_test "presets-schema"; then
                    || bad "presets-schema" "$broken"
 fi
 
+if run_test "plan-template-shape"; then
+  # S4 and S7 parse the plan by heading, and round B checks the diff against Shape.
+  # A rename here silently turns both into no-ops.
+  p="$ROOT/templates/plan.md"
+  missing=""
+  for h in "## Goal" "## Out of scope" "## Shape" "## Precedent" \
+           "## Acceptance criteria" "## Must not regress" "## Evidence plan" \
+           "## Rollback"; do
+    grep -qxF "$h" "$p" || missing="$missing [$h]"
+  done
+  # The example diagram has to obey the rule it is demonstrating: ASCII, ≤72 columns.
+  wide=$(awk '/^```text$/{d=1;next} /^```$/{d=0} d && length > 72' "$p" | wc -l | tr -d ' ')
+  nonascii=$(awk '/^```text$/{d=1;next} /^```$/{d=0} d' "$p" | LC_ALL=C grep -c '[^ -~]' || true)
+  [ "$nonascii" -eq 0 ] || missing="$missing [non-ascii-diagram]"
+  words=$(wc -w < "$p" | tr -d ' ')
+  [ -z "$missing" ] && [ "$wide" -eq 0 ] && [ "$words" -le 400 ] \
+    && ok "plan-template-shape: headings intact, ≤72 cols, under the word budget" \
+    || bad "plan-template-shape" "missing=$missing over72=$wide words=$words"
+fi
+
 echo
 echo "======================="
 printf 'passed %d · failed %d · skipped %d\n\n' "$PASS" "$FAIL" "$SKIP"

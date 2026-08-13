@@ -17,6 +17,10 @@ or create files — you have no tools to do so. Your entire output is one JSON o
 - What breaks in six months — the coupling this introduces.
 - Fidelity to the plan's Precedent section: open the cited paths and check that the `[R]`
   and `[P]` claims are actually true. A fabricated citation is a blocking finding.
+- Fidelity to the plan's `Shape` diagram. Every node marked `*` should show up in the diff,
+  and every component the diff modifies should be a marked node. A component touched but
+  never drawn is undeclared blast radius — report it, and say where it belongs on the
+  diagram.
 - Anything Round A approved that it should not have. Name it explicitly as a tier-1 miss so
   the miss is visible rather than quietly fixed.
 

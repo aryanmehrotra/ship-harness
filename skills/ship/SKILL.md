@@ -111,6 +111,33 @@ If an `[N]` decision is architectural or hard to reverse, draft
 Write `docs/plans/<TICKET>.md` from `$PLUGIN/templates/plan.md`, headings exactly as in the
 template — S4 and S7 both parse them.
 
+**Short, precise, drawn.** This file is read by a human under time pressure and by two
+reviewers with no other context. Both are served by precision; neither is served by prose.
+
+- **~400 words, one screen.** A plan longer than the diff it describes is one nobody
+  re-reads at review time — which is the only time it has to hold.
+- **Bullets, tables and diagrams. No paragraphs.** One line per item, ~15 words. If a
+  decision needs a paragraph to justify itself, it is an ADR: draft it and cite it in one
+  line here.
+- **Cut restatement.** The ticket, the file tree and the obvious are already in front of
+  everyone reading. Write what will be true, not what already is.
+- **Name things, do not describe them.** `docs/adr/0004`, `internal/auth/token.go:42`,
+  `orders.status`. A specific noun is shorter than the sentence that avoids it, and it is
+  checkable.
+
+**`## Shape` is required — one ASCII diagram of what this change touches.**
+
+- Plain ASCII (`+ - | > v ^`), ≤72 columns. No mermaid, no images, no box-drawing glyphs:
+  the plan is read in a terminal, a PR body and a `git diff`, and only ASCII survives all
+  three.
+- Mark every node this change adds or modifies with `*`; leave the rest plain. The first
+  question any reviewer has is *what moves* — the diagram should answer it before the
+  text does.
+- Label edges with what flows across them (`token`, `err`, `rows`), not with verbs.
+- A `before / after` pair only when an existing flow is re-routed. Otherwise one diagram.
+- If you cannot draw it, you do not yet understand it — go back to S0 rather than
+  covering the gap with words.
+
 Then **stop and say so plainly.** The user edits the plan and commits it. That commit is the
 approval gate. On the next invocation, do not proceed if `docs/plans/<TICKET>.md` is missing
 or has uncommitted changes:

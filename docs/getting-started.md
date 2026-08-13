@@ -78,7 +78,11 @@ Expect this to be imperfect on the first pass. It is derived and disposable; the
 **First invocation** mines precedent, asks at most five questions, writes
 `docs/plans/T-123.md`, and stops.
 
-Now do the part only you can do: read the plan. Look at the `Precedent` section first — the
+The plan fits one screen: bullets, no paragraphs, and a `Shape` section with an ASCII
+diagram of what the change touches — nodes marked `*` are the ones it adds or modifies.
+Read that diagram first; if the boxes are wrong, nothing below them is worth checking.
+
+Now do the part only you can do: read the plan. Look at the `Precedent` section next — the
 `[R]` and `[P]` lines are claims about your repo, with paths. Open one or two. If a citation
 is wrong, that is worth more than anything else you could correct, because a wrong citation
 survives review by looking like evidence.
