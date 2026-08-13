@@ -29,6 +29,14 @@ implementation.
   is.
 - **Blast radius.** Grep for everything else that reads or writes what this changes. The
   plan should name them; anything it misses is undeclared blast radius.
+- **The scale row, against your own analysis.** You worked out which limit binds first —
+  does the `Test plan` measure *that* one? A scale row that loads the endpoint while the
+  real limit is a per-row round trip inside it will pass and prove nothing. Say which limit
+  it should measure instead.
+- **Unknowns that were guessed rather than probed.** If the plan asserts a number, a
+  throughput, a library behaviour or a failure mode with no citation and no spike, that is
+  an unmeasured assumption sitting on the critical path — name it and say what 30 lines of
+  throwaway code would settle it.
 - **Operability and rollback.** Does the stated rollback actually work once this has run in
   production for a day — with data written under the new shape, and traffic in flight? A
   rollback that was never traced through in-flight data is an assumption, not a plan.

@@ -3,7 +3,7 @@
   "tracker": { "kind": "github" },
   "testPaths": ["**/*_test.go", "test/**", "tests/**"],
   "attribution": false,
-  "caps": { "planReviewA": 3, "planReviewB": 2, "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
+  "caps": { "spikes": 3, "planReviewA": 3, "planReviewB": 2, "reviewA": 3, "reviewB": 2, "evidenceFix": 2 },
   "reviewers": { "correctness": "sonnet", "design": "opus" },
   "collectors": [
     { "name": "tests", "kind": "builtin:tests", "config": { "cmd": "go test ./..." } },

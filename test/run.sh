@@ -109,8 +109,10 @@ if run_test "agents-readonly"; then
     # The reviewers must not be able to write. This is the property, not the prose.
     grep -qE '^tools:.*(Write|Edit|Bash)' "$a" && bad_agents="$bad_agents $a"
     grep -qE '^tools:' "$a" || bad_agents="$bad_agents $a:no-tools-line"
+    # A missing model: line silently collapses the two review tiers into one.
+    grep -qE '^model:' "$a" || bad_agents="$bad_agents $a:no-model"
   done
-  [ -z "$bad_agents" ] && ok "agents-readonly: reviewers have no write tools" \
+  [ -z "$bad_agents" ] && ok "agents-readonly: reviewers declare a model and no write tools" \
                        || bad "agents-readonly" "$bad_agents"
 fi
 
@@ -443,8 +445,8 @@ if run_test "plan-template-shape"; then
   p="$ROOT/templates/plan.md"
   missing=""
   for h in "## Goal" "## Out of scope" "## Shape" "## Precedent" \
-           "## Acceptance criteria" "## Must not regress" "## Evidence plan" \
-           "## Rollback"; do
+           "## Unknowns → spikes" "## Acceptance criteria" "## Test plan" \
+           "## Must not regress" "## Evidence plan" "## Rollback"; do
     grep -qxF "$h" "$p" || missing="$missing [$h]"
   done
   # The example diagram has to obey the rule it is demonstrating: ASCII, ≤72 columns.
@@ -452,30 +454,16 @@ if run_test "plan-template-shape"; then
   nonascii=$(awk '/^```text$/{d=1;next} /^```$/{d=0} d' "$p" | LC_ALL=C grep -c '[^ -~]' || true)
   [ "$nonascii" -eq 0 ] || missing="$missing [non-ascii-diagram]"
   words=$(wc -w < "$p" | tr -d ' ')
-  [ -z "$missing" ] && [ "$wide" -eq 0 ] && [ "$words" -le 400 ] \
+  for d in correctness reliability concurrency scale security regression; do
+    grep -q "| $d |" "$p" || missing="$missing [test-plan:$d]"
+  done
+  [ -z "$missing" ] && [ "$wide" -eq 0 ] && [ "$words" -le 550 ] \
     && ok "plan-template-shape: headings intact, ≤72 cols, under the word budget" \
     || bad "plan-template-shape" "missing=$missing over72=$wide words=$words"
 fi
 
 echo
 echo "agents"
-
-if run_test "reviewers-read-only"; then
-  # "Reviewers cannot edit" is a property of the tool list, not of the prompt. A reviewer
-  # that gains a write tool still reads as read-only everywhere else in the repo.
-  bad_agents=""
-  for a in "$ROOT"/agents/*.md; do
-    fm=$(awk 'NR>1 && /^---$/{exit} NR>1' "$a")
-    printf '%s' "$fm" | grep -q '^model:' || bad_agents="$bad_agents $(basename "$a"):no-model"
-    tools=$(printf '%s' "$fm" | grep '^tools:' || true)
-    [ -n "$tools" ] || bad_agents="$bad_agents $(basename "$a"):no-tools"
-    case "$tools" in
-      *Write*|*Edit*|*Bash*) bad_agents="$bad_agents $(basename "$a"):writes" ;;  # *Edit* covers NotebookEdit
-    esac
-  done
-  [ -z "$bad_agents" ] && ok "reviewers-read-only: every agent declares a model and no write tool" \
-                       || bad "reviewers-read-only" "$bad_agents"
-fi
 
 if run_test "plan-review-wired" ; then
   # An agent nobody dispatches is dead weight, and a dispatch naming an agent that does not

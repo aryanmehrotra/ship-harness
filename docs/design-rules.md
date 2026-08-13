@@ -87,6 +87,28 @@ round 1 (concreteness, correctness, reliability, testability, convention fit) un
 approves, then round 2 (architecture, responsibility, scale, blast radius, rollback) until
 it approves — same models, same caps, same no-write-tools, same never-soften rule.
 
+**Why the plan carries a test plan and not just acceptance criteria:** acceptance criteria
+describe the change working. Nearly every expensive defect is in the other half — the retry
+that double-writes, the map two goroutines share, the query that is fine at a thousand rows
+and pathological at a million, the field an attacker controls. Those get tested when they are
+named in the contract *before* the code exists, and skipped when they are left to whoever is
+staring at a green build at 6pm. So the plan names a mechanism per dimension —
+correctness, reliability, concurrency, scale, security, regression — or writes `n/a` with a
+reason, which is a decision someone can argue with rather than an omission nobody notices.
+
+**Why scale rows must report the tuple:** an average latency hides exactly the tail where
+users feel pain. p50/p95/p99 with error rate and throughput, together, is the smallest
+honest description of behaviour under load — and the plan should also name which limit is
+expected to bind first, so a load test that exercises the wrong one is visible as wrong.
+
+**Why unknowns become spikes rather than assumptions:** an agent asked to plan under
+uncertainty will write a confident sentence, because confident sentences are what planning
+documents contain. Thirty lines of throwaway code that returns a number costs less than the
+first hour of building on a guess, and it converts the riskiest line in the plan from prose
+into a measurement. The spike runs before the human sees the plan, so what reaches the gate
+contains the answer rather than the question — and the code is deleted, because an
+instrument that ships as an increment is how a probe becomes production code nobody designed.
+
 **Why it does not replace the human gate:** it raises the floor, not the ceiling. Reviewers
 check whether a plan is sound, internally consistent and conventional. Only you know whether
 it is the thing you actually wanted, and no amount of review rounds converges on that.

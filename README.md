@@ -43,7 +43,8 @@ flowchart TD
     A[/ship TICKET/] --> S0
     S0[["S0 · precedent<br/><i>git mining, no model</i>"]] --> S1
     S1[["S1 · interview<br/><i>≤5 questions, only what precedent can't answer</i>"]] --> S2
-    S2[["S2 · plan<br/><i>one screen, ASCII shape diagram</i>"]] --> S25A
+    S2[["S2 · plan<br/><i>one screen · ASCII shape · test plan per dimension</i>"]] --> SPK
+    SPK[["S2.5 · spikes<br/><i>unknowns → 30 lines → a number</i>"]] --> S25A
     S25A[["S2.5 · plan review A — concrete, correct, reliable<br/><i>read-only · cap 3</i>"]] --> S25B
     S25B[["S2.5 · plan review B — architecture, scale, blast radius<br/><i>read-only · cap 2</i>"]] --> GATE
 
@@ -135,8 +136,9 @@ Two properties make this cheap enough to run on every change:
 
 ## The four rules everything else serves
 
-1. **The plan is the contract.** A committed file, not chat history — one screen, bullets
-   and a required ASCII diagram, so it is still read at the moment it has to hold.
+1. **The plan is the contract.** A committed file, not chat history — one screen, bullets,
+   a required ASCII diagram, and a test plan naming how it gets exercised for correctness,
+   reliability, concurrency, scale and security before any of it is written.
 2. **Reviewers cannot edit. The fixer cannot touch tests.** Reviewers have no write tools at
    all; the test freeze is a `PreToolUse` hook. Neither is a request in a prompt.
 3. **A deterministic gate runs before the model looks.** Pixel diffs, console errors, failed

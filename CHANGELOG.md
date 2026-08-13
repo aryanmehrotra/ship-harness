@@ -4,6 +4,34 @@ Notable changes, newest first. Versions follow [semver](https://semver.org). The
 `.claude-plugin/plugin.json` is what Claude Code installs against — CI fails the build if
 this file, that file and the git tag disagree.
 
+## 0.3.0
+
+**The plan now says how it will be tested, and measures what it does not know.** Acceptance
+criteria describe the change working; nearly every expensive defect lives in the other half.
+
+- `## Test plan` — a required table with a row per dimension: correctness, reliability,
+  concurrency, scale, security, regression. Each names a mechanism or writes `n/a — <why>`;
+  a blank row is the gap. Reliability rows name an injected failure, concurrency rows mean
+  the race detector plus concurrent callers, scale rows carry a multiple and report
+  **p50/p95/p99 with error rate and throughput** — an average hides the tail where users
+  feel it — and name the limit expected to bind first.
+- `## Unknowns → spikes` — anything the interview and precedent could not settle becomes
+  ~30 lines of throwaway code that answers **one** question with a number. Spikes run during
+  S2.5 in a scratch worktree, **before** the user sees the plan, so what reaches the gate
+  holds the answer rather than the question. The measured result is written back and the
+  code deleted: an instrument is not an increment. Capped by `caps.spikes` (default 3).
+- S3 commits the test-plan rows as real tests in the tests-first commit, and builds the
+  smallest load harness that produces the tuple when the scale row needs one.
+- Both plan reviewers check the new sections: round A rejects rows that restate an
+  acceptance criterion or state a feeling instead of a mechanism, and lines still phrased as
+  questions; round B checks the scale row measures the limit that actually binds, and calls
+  out numbers asserted with neither a citation nor a spike.
+- `reviewer-correctness` now checks the shipped diff against the table row by row — a
+  promised mechanism with no corresponding test is a blocking finding.
+- Plan budget raised 400 → 500 words to pay for the two new sections.
+- `test/run.sh`: `plan-template-shape` asserts the new headings and every dimension row;
+  the duplicate `reviewers-read-only` test is folded back into `agents-readonly`.
+
 ## 0.2.0
 
 **The plan is reviewed by two models before you ever see it (S2.5).** A missing failure mode

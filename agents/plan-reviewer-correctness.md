@@ -33,6 +33,16 @@ implementations has not decided anything, and the diff will settle it silently.
   looking like evidence.
 - **The `Shape` diagram.** Does it match the text? Is every component the plan touches drawn
   and marked `*`? A component named in the text but missing from the diagram is a finding.
+- **The `Test plan` table.** Each row must name a *mechanism*, not an intention. Findings:
+  a row that restates an acceptance criterion instead of describing how it is exercised;
+  "handles errors gracefully" or anything else unfalsifiable; a reliability row that names
+  no injected failure; a concurrency row with no race detector and no concurrent caller; a
+  scale row with no number, or one reporting an average instead of p50/p95/p99 with error
+  rate and throughput. A blank row is a finding; `n/a — <reason>` is not, unless the reason
+  is plainly wrong for this change.
+- **`Unknowns → spikes`.** Every line must carry a *measured* answer by the time you see it,
+  and name which plan line the answer decides. A line still phrased as a question, or one
+  whose answer nothing depends on, is a finding.
 
 **Not in scope:** architecture, scalability, responsibility boundaries, long-term coupling.
 Round B covers those, and repeating them here wastes one of the only two independent looks

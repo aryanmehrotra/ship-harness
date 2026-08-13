@@ -114,7 +114,7 @@ template — S4 and S7 both parse them.
 **Short, precise, drawn.** This file is read by a human under time pressure and by two
 reviewers with no other context. Both are served by precision; neither is served by prose.
 
-- **~400 words, one screen.** A plan longer than the diff it describes is one nobody
+- **~500 words, one screen.** A plan longer than the diff it describes is one nobody
   re-reads at review time — which is the only time it has to hold.
 - **Bullets, tables and diagrams. No paragraphs.** One line per item, ~15 words. If a
   decision needs a paragraph to justify itself, it is an ADR: draft it and cite it in one
@@ -138,6 +138,42 @@ reviewers with no other context. Both are served by precision; neither is served
 - If you cannot draw it, you do not yet understand it — go back to S0 rather than
   covering the gap with words.
 
+**`## Test plan` is required, and it is not the acceptance criteria again.** Acceptance
+criteria say *it does the thing*. The test plan says *how it fails and how you'd know* —
+which is where the expensive defects live.
+
+- One row per dimension: **correctness, reliability, concurrency, scale, security,
+  regression**. Each names a mechanism or says `n/a — <why>`. A silent row is the gap; an
+  explicit `n/a` is a decision someone can argue with.
+- **Name the failure, not the feeling.** "Handles errors gracefully" is not a row.
+  "Injected: the write succeeds and the commit times out; the retry must not double-charge"
+  is.
+- **Scale rows carry numbers.** State the multiple (10× rows, callers, payload) and report
+  **p50/p95/p99 + error rate + throughput together** — an average hides exactly the tail
+  where users feel it. Name the limit you expect to bind first.
+- **Concurrency rows mean the race detector** plus N concurrent callers against the shared
+  state the `Shape` diagram shows two arrows into.
+- If a dimension needs infrastructure the repo does not have, say so in the row and put it
+  in `Open risks I'm accepting` — do not quietly drop it.
+
+**`## Unknowns → spikes` — when you are not sure, measure before you plan.**
+
+After the interview, anything still genuinely unknown gets a spike rather than a guess:
+throwaway code, ~30 lines, answering **one** question with a number.
+
+- One question per spike, with the answer's consumer named: which plan line it decides.
+- Run them in a scratch worktree during S2.5, **before** the user sees the plan. Never
+  commit spike code to the branch — it is an instrument, not an increment.
+- Write the **measured result** back into the line, then delete the code. The user should
+  be reading a plan that already contains the answer, not the question.
+- **Then think about scale, then implement.** A spike proves the mechanism at n=1; the
+  `Test plan` scale row is where you say what happens at n=10⁵. A spike that measured only
+  the happy path at one item has not derisked anything.
+- Capped by `caps.spikes` (default 3). Past the cap, stop and hand the open question to the
+  user — an unbounded spike loop is building the thing twice, once badly.
+- `none` is a good answer and the common one. A spike for something precedent already
+  settled is procrastination wearing a lab coat.
+
 ### S2.5 — Review the plan before the user ever sees it
 
 The draft is not the plan. Run it through the same two-model gauntlet the diff gets, in the
@@ -150,13 +186,21 @@ and the prior round's findings. **Never your reasoning about the plan** — a re
 read why you chose something reviews the justification, and justifications are persuasive by
 construction.
 
+**Run the spikes first.** Any `Unknowns → spikes` line still holding a question rather than a
+number gets its probe run now, in a scratch worktree, and the measured answer written back.
+A reviewer handed a plan whose open question is already answered reviews the decision; one
+handed the question reviews your guess.
+
 - **Round 1 — `plan-reviewer-correctness` (sonnet).** Concreteness, correctness, reliability
-  and failure modes, testability of every acceptance criterion, convention fit, citation
+  and failure modes, testability of every acceptance criterion, **whether the `Test plan`
+  rows name real mechanisms or restate the acceptance criteria**, convention fit, citation
   validity, diagram-versus-text agreement. Cap from `caps.planReviewA` (default 3).
 - **Round 2 — `plan-reviewer-architecture` (opus), only after round 1 approves.**
   Architecture, responsibility boundaries, scalability at 10×, blast radius, operability and
-  rollback, reversibility, precedent fidelity, and whether this solves the ticket or a nearby
-  easier problem. Cap from `caps.planReviewB` (default 2).
+  rollback, reversibility, precedent fidelity, **whether the scale row's stated limit is the
+  one that actually binds first**, whether any remaining unknown deserved a spike, and
+  whether this solves the ticket or a nearby easier problem. Cap from `caps.planReviewB`
+  (default 2).
 
 Each subagent has no write tools and returns one JSON object as its final message. **You**
 write it to `.evidence/plan-review-a.json` and `.evidence/plan-review-b.json` — the same
@@ -212,6 +256,19 @@ echo build > .evidence/phase
 Write and commit the tests for the acceptance criteria **before** any implementation code.
 After that commit, tests are frozen: the `phase-guard` hook blocks edits to `testPaths` once
 the phase leaves `build`, and it will explain itself if you try.
+
+**The `Test plan` table is part of that first commit, not a later pass.** Every row with a
+mechanism becomes a real test in the tests-first commit — the reliability row's injected
+failure, the concurrency row's race-detector run, the security row's untrusted input. A row
+deferred to "after it works" never gets written, because by then it works.
+
+The scale row is the exception and needs saying out loud: if it requires a load harness the
+repo does not have, build the smallest one that produces the tuple (p50/p95/p99, error rate,
+throughput) and commit it alongside the tests. An average is not a result.
+
+Spike code from S2.5 is **not** carried into this worktree. It answered its question and its
+answer is in the plan; shipping the instrument as if it were the implementation is how a
+30-line probe becomes production code nobody designed.
 
 If a review finding is genuinely *about* a test, say so out loud, flip the phase back to
 `build` for that single edit, and flip it forward again. The flip is visible in the run,

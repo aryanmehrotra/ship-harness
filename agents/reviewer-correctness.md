@@ -19,6 +19,12 @@ and repeating them here wastes the only two independent looks this change gets.
 Check every acceptance criterion in the plan against the diff **by name**. A criterion with
 no corresponding test is a blocking finding.
 
+Do the same for the plan's `Test plan` table, row by row. A row that promised a mechanism —
+an injected failure, a race-detector run, an untrusted-input case, a load measurement — and
+has no corresponding test in the diff is a blocking finding. A row marked `n/a` needs
+nothing. That table is a commitment made before the code existed, which is precisely what
+makes it worth checking now.
+
 ## Output
 
 Your final message must be exactly one JSON object and nothing else — no prose before it,
