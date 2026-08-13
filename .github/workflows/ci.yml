@@ -30,6 +30,18 @@ jobs:
             jq -e . "$f" > /dev/null || { echo "invalid JSON: $f"; exit 1; }
           done
 
+      # plugin.json is the version Claude Code installs against. If it drifts from the
+      # marketplace entry or the CHANGELOG, users auto-update into notes for other code.
+      - name: Versions agree across plugin.json, marketplace.json and the CHANGELOG
+        run: |
+          plugin=$(jq -r '.version' .claude-plugin/plugin.json)
+          market=$(jq -r '.plugins[0].version' .claude-plugin/marketplace.json)
+          logged=$(grep -m1 '^## ' CHANGELOG.md | sed 's/^## //')
+          if [ "$plugin" != "$market" ] || [ "$plugin" != "$logged" ]; then
+            echo "plugin.json=$plugin marketplace.json=$market CHANGELOG=$logged"
+            exit 1
+          fi
+
       - name: Validate presets against the schema
         run: |
           npm i -g ajv-cli@5 >/dev/null 2>&1

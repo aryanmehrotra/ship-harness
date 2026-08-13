@@ -71,6 +71,16 @@ flowchart TD
 /plugin install ship-harness
 ```
 
+To pick up a new version later:
+
+```bash
+/plugin marketplace update ship-harness   # then /plugin → update ship-harness
+```
+
+Every release is tagged `vX.Y.Z` with notes in
+**[CHANGELOG.md](CHANGELOG.md)**; CI refuses a build where the tag, `plugin.json` and the
+changelog disagree.
+
 **Or vendored** — files in-tree, no plugin system needed:
 
 ```bash

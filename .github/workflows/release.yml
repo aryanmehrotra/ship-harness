@@ -1,0 +1,54 @@
+name: release
+
+# Tag a commit `vX.Y.Z` and push it. Everything below is a check on the thing that
+# actually ships: the version Claude Code installs against comes from plugin.json, so a
+# tag that disagrees with it publishes release notes for code nobody will receive.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Tag, plugin.json and marketplace.json must agree
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          plugin=$(jq -r '.version' .claude-plugin/plugin.json)
+          market=$(jq -r '.plugins[0].version' .claude-plugin/marketplace.json)
+          if [ "$tag" != "$plugin" ] || [ "$tag" != "$market" ]; then
+            echo "tag=$tag plugin.json=$plugin marketplace.json=$market"
+            exit 1
+          fi
+
+      - name: Test suite
+        run: bash test/run.sh
+
+      - name: Notes for this version, from the CHANGELOG
+        run: |
+          awk -v v="## ${GITHUB_REF_NAME#v}" \
+            '$0 == v {f=1; next} f && /^## / {exit} f' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "CHANGELOG.md has no '## ${GITHUB_REF_NAME#v}' section"
+            exit 1
+          fi
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi
