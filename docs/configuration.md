@@ -119,6 +119,40 @@ Hard line caps on `docs/memory/*` and `docs/conventions.md`. Over cap, `refresh`
 duplicates first, then drops the lowest-confidence lines. It never grows a file to fit — the
 cap exists to force a decision that otherwise never gets made.
 
+## `env`
+
+Optional. How to tell when this repo's environment is serving.
+
+```json
+"env": { "ready": "curl -fsS http://localhost:4081/health", "readyTimeout": 90 }
+```
+
+`collect.sh` runs `ready` before any collector and waits for it to succeed. If it never
+does, the run exits `2` — BROKEN — naming the command that never passed, rather than
+letting every collector discover the same outage separately.
+
+| Key | Meaning |
+|---|---|
+| `ready` | shell command; success means the environment is serving |
+| `readyTimeout` | seconds to wait before reporting BROKEN (default 90) |
+
+There is deliberately no `up` and no `down`. The harness declares what ready means and
+waits; it never starts your stack. Anything that can start an environment eventually
+becomes the thing that left it running, and two components that both believe they own a
+lifecycle will disagree while you are debugging something else.
+
+That is not a limitation in practice, because with an on-demand sandbox **connecting is
+what starts things**. Point `ready` at the port and the act of checking is the act of
+waking:
+
+```json
+"env": { "ready": "sbx ready $SBX_SANDBOX", "readyTimeout": 120 }
+```
+
+This closes a hole the [collector contract](../collectors/CONTRACT.md) already names: every
+collector is told to exit `2` when its target is unreachable, and until now each one had to
+find that out on its own.
+
 ## `collectors`
 
 An array, run in order. Each entry needs a `name`, and exactly one of `kind` or `cmd`.

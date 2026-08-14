@@ -54,6 +54,44 @@ if [ "$count" = "0" ] || [ "$count" = "null" ]; then
   exit 2
 fi
 
+# ── the environment gate ─────────────────────────────────────────────────────
+# Optional `env` block:
+#
+#   "env": { "ready": "curl -fsS http://localhost:4081/health", "readyTimeout": 90 }
+#
+# There is no `up` and there never will be. The harness declares what "serving"
+# means and waits for it; it does not start anything. Whatever can start the
+# environment eventually becomes the thing that left it running, and then two
+# components believe they own its lifecycle and disagree at the worst moment.
+#
+# This closes the hole the collector contract already names: every collector is
+# told to exit 2 when its target is unreachable, and until now each one had to
+# discover that on its own, one confusing failure at a time. A target that never
+# comes up is BROKEN for the whole run, stated once, before any collector runs.
+ready_cmd=$(jq -r '.env.ready // empty' "$CFG")
+if [ -n "$ready_cmd" ]; then
+  ready_timeout=$(jq -r '.env.readyTimeout // 90' "$CFG")
+  waited=0
+
+  printf 'collect.sh: waiting for the environment (%ss)' "$ready_timeout" >&2
+
+  until eval "$ready_cmd" >/dev/null 2>&1; do
+    if [ "$waited" -ge "$ready_timeout" ]; then
+      printf '\n' >&2
+      echo "collect.sh: environment never became ready within ${ready_timeout}s" >&2
+      echo "  ready: $ready_cmd" >&2
+      echo "Reporting BROKEN rather than running collectors against a target that is not there." >&2
+      exit 2
+    fi
+
+    printf '.' >&2
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  printf ' ready (%ss)\n' "$waited" >&2
+fi
+
 worst=0
 summaries=()
 reports=()

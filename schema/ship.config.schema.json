@@ -81,6 +81,16 @@
         "conventions": { "type": "integer", "default": 40 }
       }
     },
+    "env": {
+      "type": "object",
+      "description": "How to tell when this repo's environment is serving. A readiness predicate only — the harness waits for it, it never starts anything.",
+      "additionalProperties": false,
+      "properties": {
+        "ready": { "type": "string", "description": "Shell command; success means the environment is serving. With an on-demand sandbox, connecting is also what wakes it." },
+        "readyTimeout": { "type": "integer", "minimum": 1, "default": 90, "description": "Seconds to wait before reporting the run BROKEN." }
+      },
+      "required": ["ready"]
+    },
     "collectors": {
       "type": "array",
       "description": "Evidence collectors, run in order by scripts/collect.sh.",
