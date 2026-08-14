@@ -76,6 +76,15 @@ if [ -n "$ready_cmd" ]; then
   printf 'collect.sh: waiting for the environment (%ss)' "$ready_timeout" >&2
 
   until eval "$ready_cmd" >/dev/null 2>&1; do
+    # 127 is "command not found", which no amount of waiting fixes. Spending the whole
+    # timeout on a missing binary teaches people the gate is slow rather than that they
+    # have a typo.
+    if [ "$?" = "127" ]; then
+      printf '\n' >&2
+      echo "collect.sh: env.ready command not found: $ready_cmd" >&2
+      exit 2
+    fi
+
     if [ "$waited" -ge "$ready_timeout" ]; then
       printf '\n' >&2
       echo "collect.sh: environment never became ready within ${ready_timeout}s" >&2

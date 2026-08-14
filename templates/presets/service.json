@@ -29,6 +29,10 @@
     "correctness": "sonnet",
     "design": "opus"
   },
+  "env": {
+    "ready": "sbx ready ${SBX_SANDBOX:-$(basename $PWD)}",
+    "readyTimeout": 120
+  },
   "collectors": [
     {
       "name": "tests",

@@ -153,6 +153,23 @@ This closes a hole the [collector contract](../collectors/CONTRACT.md) already n
 collector is told to exit `2` when its target is unreachable, and until now each one had to
 find that out on its own.
 
+### Pairing it with an on-demand sandbox
+
+The `service` preset ships pointing at [`sbx`](https://github.com/aryanmehrotra/sbx), which
+gives each branch its own backing services and stops them when nobody is using them:
+
+```json
+"env": { "ready": "sbx ready ${SBX_SANDBOX:-$(basename $PWD)}", "readyTimeout": 120 }
+```
+
+`sbx ready` connects to the sandbox, which is what wakes it, and then blocks until every
+service reports serving. One command is both the trigger and the check, which is why the
+harness needs no `up`: there is nothing for it to start that asking has not already started.
+
+A run against a sleeping sandbox therefore costs one wake — a few seconds — instead of a
+stack somebody had to remember to bring up, or a failure that reads like a regression. And
+between runs the branch's databases cost nothing at all.
+
 ## `collectors`
 
 An array, run in order. Each entry needs a `name`, and exactly one of `kind` or `cmd`.
