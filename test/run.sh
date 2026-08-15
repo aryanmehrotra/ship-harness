@@ -326,6 +326,90 @@ if run_test "collect-unknown-builtin"; then
   want "collect-unknown-builtin: unknown kind is BROKEN" 2 "$?"
 fi
 
+# ------------------------------------------------------------ environment ----
+echo
+echo "environment gate"
+
+# The gate exists so "the target was never up" is stated once, before anything
+# runs, instead of being rediscovered by every collector as its own confusing
+# failure. These tests hold it to that: it must wait, it must refuse, and it
+# must never let a collector report on a target that is not there.
+
+with_env() { # repo, ready-command, timeout
+  jq --arg r "$2" --argjson t "$3" '.env = {ready:$r, readyTimeout:$t}' \
+    "$1/ship.config.json" > "$1/.cfg.tmp" && mv "$1/.cfg.tmp" "$1/ship.config.json"
+}
+
+# Run collect.sh with a wall-clock ceiling and return 124 if it had to be killed.
+# The gate's whole job is to stop waiting eventually; if that regresses, the
+# suite must go red rather than hang CI until the job limit. `exec` so the pid we
+# hold is collect.sh itself and killing it does not orphan the loop. macOS ships
+# no `timeout`, hence doing it by hand.
+collect_bounded() { # repo, ceiling-seconds
+  ( cd "$1" && exec bash "$ROOT/scripts/collect.sh" >/dev/null 2>&1 ) & local pid=$! w=0
+  while kill -0 "$pid" 2>/dev/null; do
+    if [ "$w" -ge "$2" ]; then
+      kill -9 "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; return 124
+    fi
+    sleep 1; w=$((w + 1))
+  done
+  wait "$pid"
+}
+
+if run_test "env-ready-waits"; then
+  # Ready only after 2s, and the collector itself demands the flag — so this
+  # test fails if the gate does not exist, rather than passing on a technicality
+  # because a collector that ignores readiness happened to succeed.
+  d="$(new_repo)"
+  cat > "$d/needs.sh" <<'NEEDS'
+#!/usr/bin/env bash
+[ -f ready.flag ] || { echo "ran before the environment was ready" >&2; exit 2; }
+jq -n '{collector:"needs",status:"PASS",failed:[],artifacts:[],notes:"target was up"}' > "$SHIP_OUT"
+NEEDS
+  jq -n '{collectors:[{name:"needs",cmd:"bash ./needs.sh"}]}' > "$d/ship.config.json"
+  with_env "$d" "test -f ready.flag" 20
+  ( sleep 2; touch "$d/ready.flag" ) &
+  ( cd "$d" && bash "$ROOT/scripts/collect.sh" >/dev/null 2>&1 ); rc=$?
+  wait 2>/dev/null
+  s=$(jq -r .status "$d/.evidence/evidence.json" 2>/dev/null)
+  [ "$rc" = "0" ] && [ "$s" = "PASS" ] \
+    && ok "env-ready-waits: blocks until the target is serving, then collects" \
+    || bad "env-ready-waits" "rc=$rc status=$s"
+fi
+
+if run_test "env-ready-timeout"; then
+  d="$(fake_repo pass)"
+  with_env "$d" "false" 2
+  collect_bounded "$d" 15; rc=$?
+  # The assertion that matters: no evidence was written, because nothing ran.
+  ran=$([ -f "$d/.evidence/evidence.json" ] && echo yes || echo no)
+  [ "$rc" = "2" ] && [ "$ran" = "no" ] \
+    && ok "env-ready-timeout: BROKEN, and no collector ran against a dead target" \
+    || bad "env-ready-timeout" "rc=$rc collectors-ran=$ran$([ "$rc" = "124" ] && echo ' — the gate never stopped waiting')"
+fi
+
+if run_test "env-ready-not-found"; then
+  # A typo is not a slow environment. Spending the whole timeout on one teaches
+  # people the gate is slow rather than that they misspelled something.
+  d="$(fake_repo pass)"
+  with_env "$d" "definitely-not-a-real-binary-a7f3" 30
+  start=$SECONDS
+  ( cd "$d" && bash "$ROOT/scripts/collect.sh" >/dev/null 2>&1 ); rc=$?
+  elapsed=$((SECONDS - start))
+  [ "$rc" = "2" ] && [ "$elapsed" -lt 10 ] \
+    && ok "env-ready-not-found: a missing command fails fast, not after the timeout" \
+    || bad "env-ready-not-found" "rc=$rc elapsed=${elapsed}s (expected 2 and <10s)"
+fi
+
+if run_test "env-absent"; then
+  d="$(fake_repo pass)"
+  ( cd "$d" && bash "$ROOT/scripts/collect.sh" >/dev/null 2>&1 ); rc=$?
+  s=$(jq -r .status "$d/.evidence/evidence.json" 2>/dev/null)
+  [ "$rc" = "0" ] && [ "$s" = "PASS" ] \
+    && ok "env-absent: a config with no env block is unaffected" \
+    || bad "env-absent" "rc=$rc status=$s"
+fi
+
 # ------------------------------------------------------------- collectors ----
 echo
 echo "collectors"
