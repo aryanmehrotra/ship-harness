@@ -4,6 +4,22 @@ Notable changes, newest first. Versions follow [semver](https://semver.org). The
 `.claude-plugin/plugin.json` is what Claude Code installs against — CI fails the build if
 this file, that file and the git tag disagree.
 
+## 0.8.0
+
+**A review finding must point at a line, and `ship` checks the line before it fixes.**
+
+- Reviewer findings carry `evidence`: quoted lines with `file:line`, required on every
+  `blocking` and `major` finding. A finding without it is `minor` and marked unverified.
+- S4 gains **Refute before you fix**. The parent opens each cited line; a finding whose lines
+  are missing or do not say it goes to `.evidence/refuted.json` instead of costing a fix round.
+  The check is mechanical, never "my code is correct". The builder cannot have the last word:
+  the next round receives `refuted.json`, a re-raised finding cannot be refuted twice, and the
+  S6 report lists every refuted finding for the user.
+- `reviewer-correctness` gains a **Do not flag** list: pre-existing defects, lint-enforced
+  style, and code the reviewer traced and found correct.
+- New wiring test `review-evidence-wired`: the schema, both reviewers and the refute step must
+  all name `evidence`.
+
 ## 0.7.0
 
 **`ship` drives the ticket to a PR without stopping.** The two-invocation plan gate was the

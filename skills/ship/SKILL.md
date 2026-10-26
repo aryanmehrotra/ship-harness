@@ -456,11 +456,27 @@ makes "reviewers cannot edit" a property of the system rather than a request in 
 ```json
 {"verdict":"APPROVED|CHANGES_REQUESTED",
  "findings":[{"severity":"blocking|major|minor","file":"","line":0,
-              "issue":"","why_it_matters":""}]}
+              "issue":"","why_it_matters":"","evidence":""}]}
 ```
 
-Between rounds: `echo fix > .evidence/phase`, fix every `blocking` and `major` finding, then
-re-run with fresh context. At the cap, stop and hand the open findings to the user.
+**Refute before you fix.** For each `blocking` and `major` finding, open the `file:line` its
+`evidence` names and read it. The check is mechanical: do those lines exist and say what the
+finding quotes? If `evidence` is empty, or the lines are not there or do not say it, do not
+fix: record the finding in `.evidence/refuted.json` as `{"round","file","line","issue","shows"}`
+where `shows` is one line on what the lines actually say. You may not refute a finding because
+you think your code is correct; that is the bias this step must not become. Do the check
+yourself, not through a subagent.
+
+You built the code, so a refutation is a claim the next round gets to contest:
+
+- Pass `.evidence/refuted.json` to the next round with the prior findings. A finding the
+  reviewer raises again after a refutation cannot be refuted a second time. Fix it, or hand
+  it to the user at the cap.
+- The S6 report lists **every** refuted finding with its `shows` line, whatever the round
+  outcome. A refutation the user never sees is the builder marking its own work.
+
+Between rounds: `echo fix > .evidence/phase`, fix every `blocking` and `major` finding that
+survived, then re-run with fresh context. At the cap, stop and hand the open findings to the user.
 
 **Never approve to end a loop.** If you notice yourself weighing "this is round three" as a
 reason to approve, that is the bias the cap exists to catch — stop and hand it over instead.
@@ -513,6 +529,9 @@ Publish one page, in this order:
    autonomy into something done behind their back.
 2. **At most five red flags**, ranked. Not everything you noticed — the five that would
    change someone's mind.
+2b. **Every finding in `.evidence/refuted.json`**, each with its `shows` line, above the
+   two-minute list. The reviewer flagged it and you declined to fix it: the user decides
+   whether that was right.
 3. **"If you only have two minutes, check these three things"**, with anchor links.
 4. Before/after evidence side by side, downscaled.
 5. Everything else behind `<details>`.

@@ -44,7 +44,8 @@ no fence around it. The parent writes it to `.evidence/review-a.json`.
       "file": "src/auth/token.ts",
       "line": 42,
       "issue": "Refresh path never clears the old token on failure.",
-      "why_it_matters": "A failed refresh leaves a stale token that the next request sends, so the user sees a 401 loop rather than a re-login prompt."
+      "why_it_matters": "A failed refresh leaves a stale token that the next request sends, so the user sees a 401 loop rather than a re-login prompt.",
+      "evidence": "src/auth/token.ts:42-47 — `catch (e) { return null }` leaves `this.token` set; src/http/client.ts:88 reads `this.token` unconditionally."
     }
   ]
 }
@@ -52,6 +53,15 @@ no fence around it. The parent writes it to `.evidence/review-a.json`.
 
 `verdict` is `APPROVED` or `CHANGES_REQUESTED`. `severity` is `blocking`, `major` or `minor`.
 An empty `findings` array is valid and is the only thing that should accompany `APPROVED`.
+
+`evidence` is required on every `blocking` and `major` finding. Quote the lines that prove the
+defect, each with `file:line`, from the diff, the repo, or the dependency source at the pinned
+version. The parent re-opens exactly those lines before it acts. A finding that rests on a
+name, a guess or "this usually" has no evidence: report it as `minor` and say it is unverified.
+
+**Do not flag:** a defect that was already in the file before this diff; a style point a
+linter or formatter in this repo already enforces; code that looks wrong but that you traced
+and found correct. Each costs the author a round and teaches the loop to ignore you.
 
 ## The rule that makes this worth running
 

@@ -38,11 +38,16 @@ fence around it. Same schema as Round A. The parent writes it to `.evidence/revi
       "file": "src/db/migrate.ts",
       "line": 17,
       "issue": "Migration drops the old column in the same transaction that backfills the new one.",
-      "why_it_matters": "Rollback after deploy cannot recover the dropped data, so the stated rollback plan is not actually available once this ships."
+      "why_it_matters": "Rollback after deploy cannot recover the dropped data, so the stated rollback plan is not actually available once this ships.",
+      "evidence": "src/db/migrate.ts:17-24 — `DROP COLUMN old_name` runs after the backfill inside one `BEGIN`; docs/plan.md Rollback row promises a column restore."
     }
   ]
 }
 ```
+
+`evidence` is required on every `blocking` and `major` finding, with the same meaning as in
+Round A: quoted lines with `file:line` that the parent can re-open. A finding without it is
+`minor` and marked unverified.
 
 Never soften a finding to end the loop. If the honest answer at the cap is still
 `CHANGES_REQUESTED`, say so and let it reach the human.

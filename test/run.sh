@@ -638,6 +638,28 @@ if run_test "plan-review-wired" ; then
                     || bad "plan-review-wired" "$missing"
 fi
 
+if run_test "review-evidence-wired" ; then
+  # A reviewer finding the parent cannot tie to a line costs a fix round for a defect that may
+  # not exist. The schema, both reviewers and the refute step must all name `evidence`, or the
+  # field exists in one place and is never required or checked.
+  missing=""
+  for f in agents/reviewer-correctness.md agents/reviewer-design.md; do
+    grep -q '"evidence"' "$ROOT/$f" || missing="$missing example:$f"
+    grep -q 'required on every `blocking` and `major`' "$ROOT/$f" || missing="$missing rule:$f"
+  done
+  grep -q '"evidence":""' "$ROOT/skills/ship/SKILL.md" || missing="$missing schema:ship"
+  grep -q 'Refute before you fix' "$ROOT/skills/ship/SKILL.md" || missing="$missing refute:ship"
+  grep -q 'refuted.json' "$ROOT/skills/ship/SKILL.md" || missing="$missing refuted.json:ship"
+  # The builder refutes its own reviewer's finding, so the user must see every refutation: the
+  # report step must list them, and the next round must receive them.
+  report=$(sed -n '/^## S6 — Report/,/^## S7/p' "$ROOT/skills/ship/SKILL.md")
+  echo "$report" | grep -q 'refuted.json' || missing="$missing report-lists-refuted:ship"
+  grep -q 'Pass `.evidence/refuted.json` to the next round' "$ROOT/skills/ship/SKILL.md" \
+    || missing="$missing next-round-gets-refuted:ship"
+  [ -z "$missing" ] && ok "review-evidence-wired: reviewers require evidence, ship refutes before fixing" \
+                    || bad "review-evidence-wired" "$missing"
+fi
+
 echo
 echo "======================="
 printf 'passed %d · failed %d · skipped %d\n\n' "$PASS" "$FAIL" "$SKIP"
